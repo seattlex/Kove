@@ -1,0 +1,6 @@
+// expect: E0012
+
+fn main() {
+    let age: Int = "sixteen";
+    println(age);
+}

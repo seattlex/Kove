@@ -1,0 +1,86 @@
+//! The compiler driver: wires the pipeline stages together.
+//!
+//! ```text
+//! source text ── kove-syntax (ReParse) ──> syntax tree + syntax diagnostics
+//!                     │ kove-ast
+//!                     ▼
+//!                    AST ── kove-typechecker ──> semantic diagnostics
+//!                     │ kove-interpreter (when running)
+//!                     ▼
+//!                  output
+//! ```
+//!
+//! Type checking only runs when the syntax phase produced no errors — a
+//! broken parse would drown the user in follow-on errors. Within a phase,
+//! every error found is reported.
+
+use kove_ast::Program;
+use kove_diagnostics::{Diagnostic, SourceFile};
+use std::io::Write;
+
+pub struct Compilation {
+    pub source: SourceFile,
+    pub program: Program,
+    pub diagnostics: Vec<Diagnostic>,
+}
+
+impl Compilation {
+    pub fn has_errors(&self) -> bool {
+        !self.diagnostics.is_empty()
+    }
+}
+
+/// Run the compiler frontend (parse, lower, type-check) over one file.
+/// `name` is what diagnostics display as the file path.
+pub fn compile(name: &str, text: &str) -> Compilation {
+    let doc = kove_syntax::parse(text);
+    let mut diagnostics = kove_syntax::syntax_diagnostics(&doc);
+    let lowered = kove_ast::lower(&doc);
+    diagnostics.extend(lowered.diagnostics);
+    if diagnostics.is_empty() {
+        diagnostics.extend(kove_typechecker::check(&lowered.program));
+    }
+    diagnostics.sort_by_key(|d| (d.span.start, d.span.end));
+    Compilation {
+        source: SourceFile::new(name, text),
+        program: lowered.program,
+        diagnostics,
+    }
+}
+
+/// Frontend plus the `main` checks an executable program needs.
+pub fn compile_executable(name: &str, text: &str) -> Compilation {
+    let mut c = compile(name, text);
+    if !c.has_errors() {
+        c.diagnostics.extend(kove_typechecker::check_main(&c.program));
+    }
+    c
+}
+
+/// Stack reserved for the interpreter thread. The tree-walking evaluator
+/// uses host stack proportional to Kove call depth, so the driver gives it
+/// a stack sized for [`kove_interpreter::RECURSION_LIMIT`] with room to
+/// spare — Kove's own recursion limit must be what stops runaway
+/// recursion, never the host stack. (Reserved virtual memory; only pages
+/// actually used are committed.)
+const INTERPRETER_STACK: usize = 256 * 1024 * 1024;
+
+/// Execute a clean compilation's `main`, writing program output to `out`.
+/// On a runtime error, returns the renderable diagnostic.
+pub fn run(c: &Compilation, out: &mut (dyn Write + Send)) -> Result<(), Diagnostic> {
+    debug_assert!(!c.has_errors());
+    let result = std::thread::scope(|s| {
+        let handle = std::thread::Builder::new()
+            .name("kove-interpreter".into())
+            .stack_size(INTERPRETER_STACK)
+            .spawn_scoped(s, || kove_interpreter::run(&c.program, out))
+            .expect("failed to spawn the interpreter thread");
+        match handle.join() {
+            Ok(result) => result,
+            // An interpreter panic is an internal compiler error; keep its
+            // message instead of masking it.
+            Err(panic) => std::panic::resume_unwind(panic),
+        }
+    });
+    result.map_err(|e| e.diagnostic)
+}

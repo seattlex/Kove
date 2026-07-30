@@ -1,0 +1,21 @@
+[package]
+name = "kove-cli"
+description = "The `kove` command-line tool: build, run, check."
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+
+[lib]
+name = "kove_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "kove"
+path = "src/main.rs"
+
+[dependencies]
+kove-syntax = { workspace = true }
+kove-ast = { workspace = true }
+kove-typechecker = { workspace = true }
+kove-interpreter = { workspace = true }
+kove-diagnostics = { workspace = true }

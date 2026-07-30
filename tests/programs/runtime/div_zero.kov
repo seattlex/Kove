@@ -1,0 +1,7 @@
+// expect-runtime: E0301
+
+fn main() {
+    let mut d = 3;
+    d = d - 3;
+    println(12 / d);
+}

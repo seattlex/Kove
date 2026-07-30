@@ -1,0 +1,25 @@
+// Structs and enums.
+
+struct User {
+    name: String,
+    age: Int
+}
+
+enum Status {
+    Active,
+    Banned
+}
+
+fn main() {
+    let mut user = User {
+        name: "Alex",
+        age: 20
+    };
+    user.age = user.age + 1;
+
+    let status = Status::Active;
+    if status == Status::Active {
+        println(user.name);
+        println(user.age);
+    }
+}

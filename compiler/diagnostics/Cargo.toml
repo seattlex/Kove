@@ -1,0 +1,9 @@
+[package]
+name = "kove-diagnostics"
+description = "Diagnostic types and the terminal renderer for the Kove compiler."
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Intentionally none.

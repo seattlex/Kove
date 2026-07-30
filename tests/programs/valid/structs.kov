@@ -1,0 +1,33 @@
+// Structs: declaration, literals, field access, field assignment,
+// passing and returning by value.
+
+struct User {
+    name: String,
+    age: Int
+}
+
+fn birthday(user: User) -> User {
+    return User {
+        name: user.name,
+        age: user.age + 1
+    };
+}
+
+fn main() {
+    let mut user = User {
+        name: "Alex",
+        age: 20
+    };
+
+    println(user.name);
+    println(user.age);
+
+    let older = birthday(user);
+    println(older.age);
+
+    // `user` was passed by value; it is unchanged.
+    println(user.age);
+
+    user.age = 30;
+    println(user.age);
+}

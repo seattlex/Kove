@@ -1,0 +1,10 @@
+[package]
+name = "kove-typechecker"
+description = "Name resolution and type checking for Kove programs."
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+
+[dependencies]
+kove-ast = { workspace = true }
+kove-diagnostics = { workspace = true }

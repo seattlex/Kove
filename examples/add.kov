@@ -1,0 +1,13 @@
+// The Kove 0.1 milestone program.
+
+fn add(a: Int, b: Int) -> Int {
+    return a + b;
+}
+
+fn main() {
+    let x = add(10, 20);
+
+    if x > 20 {
+        println("Greater than twenty");
+    }
+}

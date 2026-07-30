@@ -1,0 +1,10 @@
+[package]
+name = "kove-ast"
+description = "The Kove abstract syntax tree and the lowering pass from the concrete syntax tree."
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+
+[dependencies]
+reparse = { workspace = true }
+kove-diagnostics = { workspace = true }

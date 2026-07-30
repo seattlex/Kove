@@ -1,0 +1,6 @@
+// expect: E0204
+
+fn main() {
+    let counter = 0;
+    counter = counter + 1;
+}

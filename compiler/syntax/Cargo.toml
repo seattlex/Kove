@@ -1,0 +1,10 @@
+[package]
+name = "kove-syntax"
+description = "The Kove language grammar on the ReParse engine: lexing, parsing, error recovery, and syntax-level diagnostics."
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+
+[dependencies]
+reparse = { workspace = true }
+kove-diagnostics = { workspace = true }

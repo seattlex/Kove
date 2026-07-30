@@ -1,0 +1,9 @@
+// expect: E0200
+// expect: E0201
+// expect: E0202
+
+fn main() {
+    let x: Strng = "typo";
+    println(missing);
+    not_a_function();
+}

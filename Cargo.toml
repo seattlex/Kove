@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = [
+    "compiler/diagnostics",
+    "compiler/syntax",
+    "compiler/ast",
+    "compiler/typechecker",
+    "runtime/interpreter",
+    "cli",
+    "tests",
+]
+
+[workspace.package]
+version = "0.1.0-dev"
+edition = "2021"
+repository = "https://github.com/seattlex/Kove"
+
+[workspace.dependencies]
+# The language frontend runs on ReParse, our incremental parser engine.
+# Pinned to a commit so builds are reproducible.
+reparse = { git = "https://github.com/seattlex/ReParse", rev = "73cfbe01fcc08a92d248a9e8f09341d7be5caf2d" }
+
+kove-diagnostics = { path = "compiler/diagnostics" }
+kove-syntax = { path = "compiler/syntax" }
+kove-ast = { path = "compiler/ast" }
+kove-typechecker = { path = "compiler/typechecker" }
+kove-interpreter = { path = "runtime/interpreter" }
+kove-cli = { path = "cli" }

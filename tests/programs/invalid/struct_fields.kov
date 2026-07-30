@@ -1,0 +1,12 @@
+// expect: E0206
+// expect: E0207
+
+struct User {
+    name: String,
+    age: Int
+}
+
+fn main() {
+    let u = User { name: "A", email: "a@example.com" };
+    println(u.name);
+}

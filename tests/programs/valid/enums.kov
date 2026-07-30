@@ -1,0 +1,32 @@
+// Enums: unit variants, equality, storage in structs.
+
+enum Status {
+    Active,
+    Suspended,
+    Banned
+}
+
+struct Account {
+    name: String,
+    status: Status
+}
+
+fn describe(status: Status) -> String {
+    if status == Status::Active {
+        return "active";
+    }
+    if status == Status::Suspended {
+        return "suspended";
+    }
+    return "banned";
+}
+
+fn main() {
+    let account = Account {
+        name: "kove",
+        status: Status::Suspended
+    };
+    println(describe(account.status));
+    println(describe(Status::Active));
+    println(account.status != Status::Banned);
+}

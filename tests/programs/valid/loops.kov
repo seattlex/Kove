@@ -1,0 +1,26 @@
+// For-loops over ranges, nesting, and interaction with mutability.
+
+fn main() {
+    let mut total = 0;
+    for i in 1..5 {
+        total = total + i;
+    }
+    println(total);
+
+    // Nested loops with shadowed names.
+    let mut grid = 0;
+    for x in 0..3 {
+        for y in 0..3 {
+            if x == y {
+                grid = grid + 1;
+            }
+        }
+    }
+    println(grid);
+
+    // Ranges are expressions; bounds can be computed.
+    let n = 2;
+    for i in n..n * 3 {
+        println(i);
+    }
+}

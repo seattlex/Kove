@@ -1,0 +1,18 @@
+[package]
+name = "kove-tests"
+description = "The Kove compiler test suite: lexer, parser, AST, type checker, diagnostics, driver and end-to-end program tests."
+version.workspace = true
+edition.workspace = true
+repository.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+kove-syntax = { workspace = true }
+kove-ast = { workspace = true }
+kove-typechecker = { workspace = true }
+kove-interpreter = { workspace = true }
+kove-diagnostics = { workspace = true }
+kove-cli = { workspace = true }
+reparse = { workspace = true }

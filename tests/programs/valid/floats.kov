@@ -1,0 +1,13 @@
+// Float arithmetic and comparisons; Kove never mixes Int and Float
+// implicitly, so everything here stays in Float.
+
+fn average(a: Float, b: Float) -> Float {
+    return (a + b) / 2.0;
+}
+
+fn main() {
+    let x = average(1.0, 4.0);
+    println(x);
+    println(x > 2.0);
+    println(x * x);
+}
