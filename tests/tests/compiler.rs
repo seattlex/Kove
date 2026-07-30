@@ -138,6 +138,6 @@ fn e0304_recursion_limit() {
 
 #[test]
 fn float_division_by_zero_is_not_an_error() {
-    // IEEE semantics for Float, checked semantics for Int — documented.
+    // IEEE semantics for Float, checked semantics for Int. Documented.
     assert_eq!(run("fn main() { println(1.0 / 0.0); }"), "inf\n");
 }

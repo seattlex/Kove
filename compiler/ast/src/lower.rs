@@ -1,4 +1,4 @@
-//! Lowering: concrete syntax tree → AST.
+//! Lowering: concrete syntax tree -> AST.
 //!
 //! Works entirely through node kind names and field names declared in
 //! `kove-syntax`. The only diagnostics produced here are the ones that

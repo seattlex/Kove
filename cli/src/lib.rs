@@ -10,9 +10,11 @@
 //!                  output
 //! ```
 //!
-//! Type checking only runs when the syntax phase produced no errors — a
-//! broken parse would drown the user in follow-on errors. Within a phase,
+//! Type checking only runs when the syntax phase produced no errors, since
+//! a broken parse would drown the user in follow-on errors. Within a phase,
 //! every error found is reported.
+
+pub mod project;
 
 use kove_ast::Program;
 use kove_diagnostics::{Diagnostic, SourceFile};
@@ -60,9 +62,9 @@ pub fn compile_executable(name: &str, text: &str) -> Compilation {
 /// Stack reserved for the interpreter thread. The tree-walking evaluator
 /// uses host stack proportional to Kove call depth, so the driver gives it
 /// a stack sized for [`kove_interpreter::RECURSION_LIMIT`] with room to
-/// spare — Kove's own recursion limit must be what stops runaway
-/// recursion, never the host stack. (Reserved virtual memory; only pages
-/// actually used are committed.)
+/// spare. Kove's own recursion limit must be what stops runaway recursion,
+/// never the host stack. (Reserved virtual memory; only pages actually
+/// used are committed.)
 const INTERPRETER_STACK: usize = 256 * 1024 * 1024;
 
 /// Execute a clean compilation's `main`, writing program output to `out`.

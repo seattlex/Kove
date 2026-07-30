@@ -154,7 +154,7 @@ fn every_input_produces_a_tree_covering_every_byte() {
 #[test]
 fn precedence_and_associativity() {
     // `a - b - c` associates left; `||` binds looser than `&&`.
-    // Compare with whitespace collapsed — nesting, not layout, is under test.
+    // Compare with whitespace collapsed; nesting, not layout, is under test.
     let tree = sexpr("fn f() { let x = a - b - c; let y = p || q && r; }");
     let flat = tree.split_whitespace().collect::<Vec<_>>().join(" ");
     assert!(
@@ -190,7 +190,7 @@ fn assignment_targets() {
 
 #[test]
 fn incremental_edit_matches_from_scratch_parse() {
-    // Type the missing `)` into `foo(bar` — the incrementally repaired
+    // Type the missing `)` into `foo(bar`. The incrementally repaired
     // tree must equal a fresh parse of the new text.
     let mut doc = parse("fn main() { foo(bar; }");
     let insert_at = doc.text().find("bar").unwrap() + 3;
