@@ -1,10 +1,12 @@
 //! The compiler driver: wires the pipeline stages together.
 //!
 //! ```text
-//! source text ── kove-syntax (ReParse) ──> syntax tree + syntax diagnostics
+//! source text ── kove-lexer + kove-parser ──> syntax tree + diagnostics
 //!                     │ kove-ast
 //!                     ▼
-//!                    AST ── kove-typechecker ──> semantic diagnostics
+//!                    AST ── kove-resolver ──> what each name refers to
+//!                     │                       │
+//!                     └──> kove-typechecker <─┘ ──> semantic diagnostics
 //!                     │ kove-interpreter (when running)
 //!                     ▼
 //!                  output
@@ -13,8 +15,6 @@
 //! Type checking only runs when the syntax phase produced no errors, since
 //! a broken parse would drown the user in follow-on errors. Within a phase,
 //! every error found is reported.
-
-pub mod project;
 
 use kove_ast::Program;
 use kove_diagnostics::{Diagnostic, SourceFile};
@@ -35,12 +35,16 @@ impl Compilation {
 /// Run the compiler frontend (parse, lower, type-check) over one file.
 /// `name` is what diagnostics display as the file path.
 pub fn compile(name: &str, text: &str) -> Compilation {
-    let doc = kove_syntax::parse(text);
-    let mut diagnostics = kove_syntax::syntax_diagnostics(&doc);
+    let doc = kove_parser::parse(text);
+    let mut diagnostics = kove_parser::syntax_diagnostics(&doc);
     let lowered = kove_ast::lower(&doc);
     diagnostics.extend(lowered.diagnostics);
     if diagnostics.is_empty() {
-        diagnostics.extend(kove_typechecker::check(&lowered.program));
+        // Names first, then types. The type checker consumes the
+        // resolver's output and never looks a name up itself.
+        let (resolutions, resolve_diags) = kove_resolver::resolve(&lowered.program);
+        diagnostics.extend(resolve_diags);
+        diagnostics.extend(kove_typechecker::check(&lowered.program, &resolutions));
     }
     diagnostics.sort_by_key(|d| (d.span.start, d.span.end));
     Compilation {

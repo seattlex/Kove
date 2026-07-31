@@ -5,9 +5,9 @@
 //!   1 - the program has compile-time or runtime errors
 //!   2 - the CLI itself was used incorrectly / the feature is unavailable
 
-use kove_cli::project;
 use kove_cli::Compilation;
 use kove_diagnostics::render_all;
+use kove_manifest as project;
 use std::process::ExitCode;
 
 const USAGE: &str = "\

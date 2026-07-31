@@ -1,6 +1,6 @@
 [package]
-name = "kove-ast"
-description = "The Kove abstract syntax tree and the lowering pass from the concrete syntax tree."
+name = "kove-lexer"
+description = "Kove's token vocabulary: trivia, literals, punctuation, keywords, and lexical diagnostics."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,5 +8,4 @@ repository.workspace = true
 
 [dependencies]
 reparse = { workspace = true }
-kove-lexer = { workspace = true }
 kove-diagnostics = { workspace = true }

@@ -15,8 +15,10 @@ name = "kove"
 path = "src/main.rs"
 
 [dependencies]
-kove-syntax = { workspace = true }
+kove-parser = { workspace = true }
 kove-ast = { workspace = true }
+kove-resolver = { workspace = true }
 kove-typechecker = { workspace = true }
 kove-interpreter = { workspace = true }
 kove-diagnostics = { workspace = true }
+kove-manifest = { workspace = true }

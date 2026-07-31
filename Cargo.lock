@@ -7,6 +7,7 @@ name = "kove-ast"
 version = "0.1.0-dev"
 dependencies = [
  "kove-diagnostics",
+ "kove-lexer",
  "reparse",
 ]
 
@@ -17,7 +18,9 @@ dependencies = [
  "kove-ast",
  "kove-diagnostics",
  "kove-interpreter",
- "kove-syntax",
+ "kove-manifest",
+ "kove-parser",
+ "kove-resolver",
  "kove-typechecker",
 ]
 
@@ -34,11 +37,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "kove-syntax"
+name = "kove-lexer"
 version = "0.1.0-dev"
 dependencies = [
  "kove-diagnostics",
  "reparse",
+]
+
+[[package]]
+name = "kove-manifest"
+version = "0.1.0-dev"
+
+[[package]]
+name = "kove-parser"
+version = "0.1.0-dev"
+dependencies = [
+ "kove-diagnostics",
+ "kove-lexer",
+ "reparse",
+]
+
+[[package]]
+name = "kove-resolver"
+version = "0.1.0-dev"
+dependencies = [
+ "kove-ast",
+ "kove-diagnostics",
 ]
 
 [[package]]
@@ -49,7 +73,8 @@ dependencies = [
  "kove-cli",
  "kove-diagnostics",
  "kove-interpreter",
- "kove-syntax",
+ "kove-parser",
+ "kove-resolver",
  "kove-typechecker",
  "reparse",
 ]
@@ -60,6 +85,7 @@ version = "0.1.0-dev"
 dependencies = [
  "kove-ast",
  "kove-diagnostics",
+ "kove-resolver",
 ]
 
 [[package]]
