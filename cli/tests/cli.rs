@@ -247,3 +247,84 @@ fn fmt_rejects_unknown_options() {
     let out = kove(&["fmt", "--wat"]);
     assert_eq!(out.status.code(), Some(2));
 }
+
+#[test]
+fn test_runs_test_functions_and_reports_failures() {
+    let dir = std::env::temp_dir().join("kove-test-cmd");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("suite.kov");
+    std::fs::write(
+        &file,
+        "fn double(n: Int) -> Int { return n * 2; }\n\
+         fn test_passes() { assert(double(2) == 4); }\n\
+         fn test_fails() { assert(double(3) == 7); }\n\
+         fn main() { }\n",
+    )
+    .unwrap();
+
+    let out = kove(&["test", file.to_str().unwrap()]);
+    assert_eq!(out.status.code(), Some(1));
+    let stdout = String::from_utf8(out.stdout).unwrap();
+    assert!(stdout.contains("ok    test_passes"), "{stdout}");
+    assert!(stdout.contains("FAIL  test_fails"), "{stdout}");
+    let stderr = String::from_utf8(out.stderr).unwrap();
+    assert!(stderr.contains("error[E0306]"), "{stderr}");
+    assert!(stderr.contains("1 passed, 1 failed"), "{stderr}");
+}
+
+#[test]
+fn test_succeeds_when_every_test_passes() {
+    let dir = std::env::temp_dir().join("kove-test-pass");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("suite.kov");
+    std::fs::write(
+        &file,
+        "fn test_a() { assert(1 == 1); }\nfn test_b() { assert(true); }\nfn main() { }\n",
+    )
+    .unwrap();
+
+    let out = kove(&["test", file.to_str().unwrap()]);
+    assert!(out.status.success());
+    assert!(String::from_utf8(out.stdout).unwrap().contains("2 passed"));
+}
+
+#[test]
+fn test_says_so_when_there_are_no_tests() {
+    let out = kove(&["test", &example("hello.kov")]);
+    assert!(out.status.success());
+    assert!(String::from_utf8(out.stdout)
+        .unwrap()
+        .contains("no tests found"));
+}
+
+#[test]
+fn a_test_function_with_the_wrong_signature_is_reported() {
+    let dir = std::env::temp_dir().join("kove-test-sig");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("suite.kov");
+    std::fs::write(&file, "fn test_wrong(a: Int) { }\nfn main() { }\n").unwrap();
+
+    let out = kove(&["test", file.to_str().unwrap()]);
+    assert_eq!(out.status.code(), Some(1));
+    let stderr = String::from_utf8(out.stderr).unwrap();
+    assert!(stderr.contains("error[E0220]"), "{stderr}");
+}
+
+#[test]
+fn tests_do_not_need_a_main() {
+    let dir = std::env::temp_dir().join("kove-test-nomain");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("lib.kov");
+    std::fs::write(&file, "fn test_a() { assert(true); }\n").unwrap();
+
+    let out = kove(&["test", file.to_str().unwrap()]);
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+}

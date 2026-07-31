@@ -115,22 +115,34 @@ type Eval = Result<Value, RuntimeError>;
 
 /// Run a type-checked program's `main`, writing `println` output to `out`.
 pub fn run(program: &Program, out: &mut dyn Write) -> Result<(), RuntimeError> {
+    run_function(program, "main", out)
+}
+
+/// Run one named function that takes no arguments.
+///
+/// `kove test` uses this to call each test function in turn. The driver
+/// has already verified the function exists and takes no parameters.
+pub fn run_function(
+    program: &Program,
+    name: &str,
+    out: &mut dyn Write,
+) -> Result<(), RuntimeError> {
     let mut funcs: HashMap<&str, &Function> = HashMap::new();
     for item in &program.items {
         if let Item::Function(f) = item {
             funcs.insert(f.name.name.as_str(), f);
         }
     }
-    let main = funcs
-        .get("main")
+    let entry = funcs
+        .get(name)
         .copied()
-        .expect("the driver verifies `main` exists before running");
+        .unwrap_or_else(|| ice("asked to run a function that does not exist"));
     let mut interp = Interp {
         funcs,
         out,
         depth: 0,
     };
-    interp.call(main, Vec::new(), main.name.span)?;
+    interp.call(entry, Vec::new(), entry.name.span)?;
     Ok(())
 }
 

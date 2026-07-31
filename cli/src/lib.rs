@@ -72,6 +72,72 @@ pub fn compile_executable(name: &str, text: &str) -> Compilation {
 /// used are committed.)
 const INTERPRETER_STACK: usize = 256 * 1024 * 1024;
 
+/// The test functions in a program: every function whose name starts
+/// with `test_`, in declaration order.
+///
+/// Kove has no attributes, so a naming convention is what marks a test.
+/// Only functions that take no parameters and return nothing qualify;
+/// `check_tests` reports the ones that look like tests but cannot be run.
+pub fn test_functions(program: &Program) -> Vec<&kove_ast::Function> {
+    program
+        .items
+        .iter()
+        .filter_map(|i| match i {
+            kove_ast::Item::Function(f)
+                if f.name.name.starts_with("test_")
+                    && f.params.is_empty()
+                    && f.return_type.is_none() =>
+            {
+                Some(f)
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+/// Frontend plus the checks `kove test` needs. A `test_` function that
+/// takes parameters or returns a value cannot be run by the harness, and
+/// silently skipping it would be worse than saying so.
+pub fn compile_tests(name: &str, text: &str) -> Compilation {
+    let mut c = compile(name, text);
+    if c.has_errors() {
+        return c;
+    }
+    for item in &c.program.items {
+        let kove_ast::Item::Function(f) = item else {
+            continue;
+        };
+        if !f.name.name.starts_with("test_") {
+            continue;
+        }
+        if !f.params.is_empty() || f.return_type.is_some() {
+            c.diagnostics.push(
+                Diagnostic::error(
+                    "E0220",
+                    format!(
+                        "`{}` looks like a test but cannot be run as one",
+                        f.name.name
+                    ),
+                    f.name.span,
+                )
+                .with_label("test functions take no parameters and return nothing")
+                .with_help(format!("change the signature to `fn {}()`", f.name.name)),
+            );
+        }
+    }
+    c
+}
+
+/// Run one test function, returning its output on success or the runtime
+/// diagnostic on failure.
+pub fn run_test(c: &Compilation, name: &str) -> Result<Vec<u8>, Diagnostic> {
+    let mut out = Vec::new();
+    match run_entry(c, name, &mut out) {
+        Ok(()) => Ok(out),
+        Err(d) => Err(d),
+    }
+}
+
 /// Execute a clean compilation's `main`, writing program output to `out`.
 /// On a runtime error, returns the renderable diagnostic.
 // The diagnostic is returned unboxed on purpose: this runs once per
@@ -79,12 +145,18 @@ const INTERPRETER_STACK: usize = 256 * 1024 * 1024;
 // constructed at most once.
 #[allow(clippy::result_large_err)]
 pub fn run(c: &Compilation, out: &mut (dyn Write + Send)) -> Result<(), Diagnostic> {
+    run_entry(c, "main", out)
+}
+
+/// Execute one named entry point on the interpreter thread.
+#[allow(clippy::result_large_err)]
+fn run_entry(c: &Compilation, entry: &str, out: &mut (dyn Write + Send)) -> Result<(), Diagnostic> {
     debug_assert!(!c.has_errors());
     let result = std::thread::scope(|s| {
         let handle = std::thread::Builder::new()
             .name("kove-interpreter".into())
             .stack_size(INTERPRETER_STACK)
-            .spawn_scoped(s, || kove_interpreter::run(&c.program, out))
+            .spawn_scoped(s, || kove_interpreter::run_function(&c.program, entry, out))
             .expect("failed to spawn the interpreter thread");
         match handle.join() {
             Ok(result) => result,

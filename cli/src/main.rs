@@ -21,6 +21,7 @@ COMMANDS:
     build [file]    Check the program the way `run` would (no native backend yet)
     run [file]      Compile and execute the program
     check [file]    Report diagnostics without running
+    test [file]     Run every `test_...` function in the program
     fmt [path]...   Format .kov files in place (--check to only report)
     version         Print the toolchain version
     help            Print this message
@@ -38,6 +39,7 @@ fn main() -> ExitCode {
         Some("build") => build_or_check(args.get(1), Mode::Build),
         Some("run") => run(args.get(1)),
         Some("check") => build_or_check(args.get(1), Mode::Check),
+        Some("test") => test(args.get(1)),
         Some("fmt") => fmt(&args[1..]),
         Some("version") | Some("--version") | Some("-V") => {
             println!("kove {}", env!("CARGO_PKG_VERSION"));
@@ -312,4 +314,61 @@ fn collect_kov_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
             out.push(path);
         }
     }
+}
+
+/// `kove test [file]`
+///
+/// Compiles the program and runs every `test_` function in declaration
+/// order. A test passes if it finishes; it fails if it hits a runtime
+/// error, which is what `assert` produces.
+fn test(arg: Option<&String>) -> ExitCode {
+    let (path, text) = match load(arg) {
+        Ok(v) => v,
+        Err(code) => return code,
+    };
+    let c = kove_cli::compile_tests(&path, &text);
+    if let Some(code) = report(&c) {
+        return code;
+    }
+
+    let tests = kove_cli::test_functions(&c.program);
+    if tests.is_empty() {
+        println!("no tests found in `{path}`");
+        println!("note: a test is a function named `test_...` taking no parameters");
+        return ExitCode::SUCCESS;
+    }
+
+    println!("running {} test(s) in `{}`", tests.len(), path);
+    let mut failures = Vec::new();
+    for f in &tests {
+        let name = f.name.name.clone();
+        match kove_cli::run_test(&c, &name) {
+            Ok(output) => {
+                println!("  ok    {name}");
+                // A passing test's output is not interesting, but a
+                // passing test that printed something might be.
+                if !output.is_empty() {
+                    for line in String::from_utf8_lossy(&output).lines() {
+                        println!("          {line}");
+                    }
+                }
+            }
+            Err(diag) => {
+                println!("  FAIL  {name}");
+                failures.push((name, diag));
+            }
+        }
+    }
+
+    let passed = tests.len() - failures.len();
+    if failures.is_empty() {
+        println!("\n{passed} passed");
+        return ExitCode::SUCCESS;
+    }
+    for (name, diag) in &failures {
+        eprintln!("\n---- {name} ----");
+        eprintln!("{}", kove_diagnostics::render(diag, &c.source));
+    }
+    eprintln!("{passed} passed, {} failed", failures.len());
+    ExitCode::from(1)
 }
