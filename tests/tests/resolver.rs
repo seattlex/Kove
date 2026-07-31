@@ -6,8 +6,17 @@
 //! through the resolver API directly to check the resolution map itself.
 
 use kove_ast::{ExprKind, Item, Stmt};
+use kove_diagnostics::Diagnostic;
 use kove_resolver::Resolution;
 use kove_tests::{codes, resolve};
+
+/// These tests are about the resolution map, so they check for errors and
+/// let warnings (such as the unused-binding lint) be.
+#[track_caller]
+fn assert_no_errors(diags: &[Diagnostic]) {
+    let errors: Vec<&Diagnostic> = diags.iter().filter(|d| d.is_error()).collect();
+    assert!(errors.is_empty(), "{errors:?}");
+}
 
 #[track_caller]
 fn assert_code(src: &str, code: &str) {
@@ -156,6 +165,69 @@ fn nothing_is_suggested_when_nothing_is_close() {
     );
 }
 
+// --- Lints -----------------------------------------------------------------
+
+#[test]
+fn w0001_unused_bindings() {
+    use kove_tests::warning_codes;
+
+    assert_eq!(
+        warning_codes("fn main() { let x = 1; }"),
+        vec!["W0001"],
+        "an unused let warns"
+    );
+    assert_eq!(
+        warning_codes("fn f(a: Int) { }\nfn main() { f(1); }"),
+        vec!["W0001"],
+        "an unused parameter warns"
+    );
+    assert_eq!(
+        warning_codes("fn main() { for i in 0..3 { } }"),
+        vec!["W0001"],
+        "an unused loop variable warns"
+    );
+}
+
+#[test]
+fn w0001_stays_quiet_when_a_binding_is_used() {
+    use kove_tests::warning_codes;
+
+    assert!(warning_codes("fn main() { let x = 1; println(x); }").is_empty());
+    assert!(warning_codes("fn f(a: Int) -> Int { return a; }\nfn main() { f(1); }").is_empty());
+    assert!(warning_codes("fn main() { for i in 0..3 { println(i); } }").is_empty());
+    // Shadowing: both bindings are read.
+    assert!(
+        warning_codes("fn main() { let x = 1; println(x); let x = 2; println(x); }").is_empty()
+    );
+}
+
+#[test]
+fn an_underscore_prefix_silences_the_unused_lint() {
+    use kove_tests::warning_codes;
+
+    assert!(warning_codes("fn main() { let _x = 1; }").is_empty());
+    assert!(warning_codes("fn f(_a: Int) { }\nfn main() { f(1); }").is_empty());
+}
+
+#[test]
+fn warnings_do_not_stop_compilation() {
+    // The program still compiles and runs with an unused binding in it.
+    let c = kove_cli::compile_executable("t.kov", "fn main() { let x = 1; println(2); }");
+    assert!(!c.has_errors());
+    assert_eq!(c.warning_count(), 1);
+}
+
+#[test]
+fn a_shadowed_binding_that_is_never_read_still_warns() {
+    use kove_tests::warning_codes;
+
+    // The first `x` is shadowed before anything reads it.
+    assert_eq!(
+        warning_codes("fn main() { let x = 1; let x = 2; println(x); }"),
+        vec!["W0001"]
+    );
+}
+
 // --- The resolution map ----------------------------------------------------
 
 /// The `Var` expressions in the first function's body, in source order.
@@ -184,7 +256,7 @@ fn a_reference_resolves_to_the_binding_that_is_in_scope() {
              let b = a;\n\
          }",
     );
-    assert!(diags.is_empty(), "{diags:?}");
+    assert_no_errors(&diags);
     let refs = var_refs(&program);
     assert_eq!(refs.len(), 1);
     let Resolution::Local(local) = res.resolution(refs[0].1) else {
@@ -204,7 +276,7 @@ fn shadowing_creates_a_second_distinct_binding() {
              let inner = a;\n\
          }",
     );
-    assert!(diags.is_empty(), "{diags:?}");
+    assert_no_errors(&diags);
     let refs = var_refs(&program);
     assert_eq!(refs.len(), 2);
     let (Resolution::Local(first), Resolution::Local(second)) =
@@ -232,7 +304,7 @@ fn items_resolve_regardless_of_declaration_order() {
          fn make() -> P { return P { x: 1 }; }\n\
          struct P { x: Int }",
     );
-    assert!(diags.is_empty(), "{diags:?}");
+    assert_no_errors(&diags);
     let id = res.func_id("make").expect("`make` is resolved");
     assert_eq!(res.func_def(id).name, "make");
 }
@@ -240,7 +312,7 @@ fn items_resolve_regardless_of_declaration_order() {
 #[test]
 fn parameters_are_bindings_of_their_function() {
     let (program, res, diags) = resolve("fn f(a: Int, b: Int) { let c = a; }\nfn main() { }");
-    assert!(diags.is_empty(), "{diags:?}");
+    assert_no_errors(&diags);
     let Item::Function(f) = &program.items[0] else {
         panic!("expected a function");
     };
@@ -257,8 +329,12 @@ fn parameters_are_bindings_of_their_function() {
 #[test]
 fn unresolved_names_resolve_to_error_exactly_once() {
     let (program, res, diags) = resolve("fn main() { let x = missing; }");
-    assert_eq!(diags.len(), 1);
-    assert_eq!(diags[0].code, "E0201");
+    let errors: Vec<&str> = diags
+        .iter()
+        .filter(|d| d.is_error())
+        .map(|d| d.code)
+        .collect();
+    assert_eq!(errors, vec!["E0201"]);
     let refs = var_refs(&program);
     assert_eq!(res.resolution(refs[0].1), Resolution::Error);
 }
@@ -267,7 +343,7 @@ fn unresolved_names_resolve_to_error_exactly_once() {
 fn a_call_resolves_to_the_function_it_names() {
     let (program, res, diags) =
         resolve("fn add(a: Int) -> Int { return a; }\nfn main() { add(1); }");
-    assert!(diags.is_empty(), "{diags:?}");
+    assert_no_errors(&diags);
     let Item::Function(main) = &program.items[1] else {
         panic!("expected main");
     };

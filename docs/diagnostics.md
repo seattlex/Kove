@@ -1,7 +1,8 @@
 # Diagnostic codes
 
-Every Kove diagnostic carries a stable code. Codes are never reused or
-renumbered, so documentation and searches can rely on them. The
+Every Kove diagnostic carries a stable code: `E....` for errors and
+`W....` for warnings. Codes are never reused or renumbered, so
+documentation and searches can rely on them. The
 rendering format is part of the compiler's contract and golden-tested:
 
 ```text
@@ -68,6 +69,16 @@ diagnostic downstream.
 | E0219 | Struct literal syntax used with an enum. |
 | E0220 | A `test_` function that `kove test` cannot run (it takes parameters or returns a value). |
 | E0230 | Only named functions can be called (no methods or function values yet). |
+
+## Warnings (W00xx)
+
+Warnings are printed like errors but with `-` markers instead of `^`, and
+they never fail a build or stop a later compiler stage. Exit codes are
+unaffected.
+
+| Code | Meaning |
+| --- | --- |
+| W0001 | A binding (a `let`, a parameter, or a `for` variable) that nothing ever refers to. Prefix the name with `_` to say it is deliberate. |
 
 ## Runtime errors (E03xx)
 

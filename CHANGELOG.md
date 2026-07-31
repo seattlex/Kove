@@ -45,6 +45,10 @@ the start of v0.7 tooling.
   mistake produces one diagnostic
 - Roughly 30 stable diagnostic codes, rendered with a source snippet,
   caret markers, labels, help and notes
+- Suggestions for mistyped names: unknown types, variables and functions
+  propose the closest thing in scope when one is close enough
+- Warnings as a separate outcome from errors, with the first lint
+  (W0001, unused binding); warnings never fail a build
 - Tree-walking reference interpreter with checked Int arithmetic
   (division by zero, remainder by zero, overflow) and a recursion limit
   that reports a diagnostic instead of overflowing the host stack

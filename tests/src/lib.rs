@@ -57,11 +57,26 @@ pub fn resolve(
     (lowered.program, resolutions, diags)
 }
 
-/// Diagnostic codes produced by the full frontend, in source order.
+/// Error codes produced by the full frontend, in source order.
+///
+/// Warnings are excluded: almost every test is about whether a program is
+/// accepted, and a lint firing should not make an unrelated test fail.
+/// Use [`warning_codes`] to assert on lints.
 pub fn codes(text: &str) -> Vec<&'static str> {
     kove_cli::compile("test.kov", text)
         .diagnostics
         .iter()
+        .filter(|d| d.is_error())
+        .map(|d| d.code)
+        .collect()
+}
+
+/// Warning codes produced by the full frontend, in source order.
+pub fn warning_codes(text: &str) -> Vec<&'static str> {
+    kove_cli::compile("test.kov", text)
+        .diagnostics
+        .iter()
+        .filter(|d| d.is_warning())
         .map(|d| d.code)
         .collect()
 }

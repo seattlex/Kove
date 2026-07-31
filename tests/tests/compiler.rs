@@ -18,10 +18,18 @@ fn executables_require_main() {
 
 #[test]
 fn main_must_have_no_parameters_and_no_return_type() {
-    let c = kove_cli::compile_executable("t.kov", "fn main(x: Int) { }");
-    assert_eq!(c.diagnostics[0].code, "E0214");
-    let c = kove_cli::compile_executable("t.kov", "fn main() -> Int { return 1; }");
-    assert_eq!(c.diagnostics[0].code, "E0214");
+    // The parameter is also unused, so look for the error specifically
+    // rather than assuming it is the only diagnostic.
+    for src in ["fn main(x: Int) { }", "fn main() -> Int { return 1; }"] {
+        let c = kove_cli::compile_executable("t.kov", src);
+        let errors: Vec<&str> = c
+            .diagnostics
+            .iter()
+            .filter(|d| d.is_error())
+            .map(|d| d.code)
+            .collect();
+        assert_eq!(errors, vec!["E0214"], "for {src:?}");
+    }
 }
 
 #[test]

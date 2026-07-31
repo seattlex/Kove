@@ -72,6 +72,8 @@ pub fn compile_executable(name: &str, text: &str) -> Compilation {
     if !c.has_errors() {
         c.diagnostics
             .extend(kove_typechecker::check_main(&c.program));
+        // Keep the list in source order after adding to it.
+        c.diagnostics.sort_by_key(|d| (d.span.start, d.span.end));
     }
     c
 }
@@ -137,6 +139,7 @@ pub fn compile_tests(name: &str, text: &str) -> Compilation {
             );
         }
     }
+    c.diagnostics.sort_by_key(|d| (d.span.start, d.span.end));
     c
 }
 

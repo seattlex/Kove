@@ -26,7 +26,7 @@ mod suggest;
 
 use kove_ast::*;
 use kove_diagnostics::{Diagnostic, Span};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LocalId(pub u32);
@@ -128,6 +128,8 @@ pub struct ParamDef {
 pub struct LocalDef {
     pub name: String,
     pub mutable: bool,
+    /// Where the binding was declared, for diagnostics about it.
+    pub span: Span,
 }
 
 /// Everything the resolver learned, consumed by later stages.
@@ -222,6 +224,7 @@ pub fn resolve(program: &Program) -> (Resolutions, Vec<Diagnostic>) {
             r.resolve_function(f);
         }
     }
+    r.report_unused();
     r.diags.sort_by_key(|d| (d.span.start, d.span.end));
     (r.out, r.diags)
 }
@@ -230,6 +233,8 @@ pub fn resolve(program: &Program) -> (Resolutions, Vec<Diagnostic>) {
 struct Resolver {
     out: Resolutions,
     scopes: Vec<HashMap<String, LocalId>>,
+    /// Bindings that something actually referred to.
+    used: HashSet<LocalId>,
     diags: Vec<Diagnostic>,
 }
 
@@ -475,6 +480,7 @@ impl Resolver {
         self.out.locals.push(LocalDef {
             name: name.name.clone(),
             mutable,
+            span: name.span,
         });
         self.out.bindings.insert(name.id, id);
         id
@@ -626,7 +632,10 @@ impl Resolver {
             | ExprKind::Error => {}
             ExprKind::Var(name) => {
                 let resolution = match self.lookup(name) {
-                    Some(local) => Resolution::Local(local),
+                    Some(local) => {
+                        self.used.insert(local);
+                        Resolution::Local(local)
+                    }
                     None => {
                         let mut d = Diagnostic::error(
                             "E0201",
@@ -806,6 +815,33 @@ impl Resolver {
             .with_label("not a known enum"),
         );
         Resolution::Error
+    }
+}
+
+impl Resolver {
+    /// Warn about bindings nothing ever referred to.
+    ///
+    /// A leading underscore means "I know, and I meant it", which is the
+    /// escape hatch for a binding that exists for its shape rather than
+    /// its value.
+    fn report_unused(&mut self) {
+        for (i, local) in self.out.locals.iter().enumerate() {
+            if local.name.starts_with('_') || self.used.contains(&LocalId(i as u32)) {
+                continue;
+            }
+            self.diags.push(
+                Diagnostic::warning(
+                    "W0001",
+                    format!("`{}` is never used", local.name),
+                    local.span,
+                )
+                .with_label("declared here and never referred to")
+                .with_help(format!(
+                    "remove it, or rename it to `_{}` if it is deliberate",
+                    local.name
+                )),
+            );
+        }
     }
 }
 
