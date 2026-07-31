@@ -36,12 +36,12 @@ Native compilation is the next substantial piece of work. The full
 | | Version | State |
 | --- | --- | --- |
 | ✅ | v0.1 Tokenizer | done |
-| ✅ | v0.2 Parser | done, except a source pretty printer |
+| ✅ | v0.2 Parser | done |
 | ✅ | v0.3 Semantic analysis | done |
 | ✅ | v0.4 Type checker | done |
 | ✅ | v0.5 Interpreter | done |
 | ▢ | v0.6 Native compiler | not started |
-| ◐ | v0.7 Package manager, formatter, LSP | `kove new` and manifests only |
+| ◐ | v0.7 Package manager, formatter, LSP | formatter and `kove new` done |
 | ▢ | v1.0 Self-hosting begins | not started |
 
 Directories for the parts that do not exist yet are not empty: each one
@@ -96,10 +96,17 @@ version = "0.1.0"
 [dependencies]
 ```
 
-Commands: `kove new`, `kove build`, `kove run`, `kove check`, `kove fmt`
-(reserved), `kove version`. Without a file argument, kove uses the
-current project's `src/main.kov`. Exit codes are stable for CI: `0`
-success, `1` the program has errors, `2` the CLI was misused.
+Commands: `kove new`, `kove build`, `kove run`, `kove check`, `kove fmt`,
+`kove version`. Without a file argument, kove uses the current project's
+`src/main.kov`. Exit codes are stable for CI: `0` success, `1` the
+program has errors, `2` the CLI was misused.
+
+Formatting is opinionated and has no options:
+
+```console
+$ kove fmt              # rewrite the project's sources
+$ kove fmt --check      # report what would change, exit 1 if anything would
+```
 
 `kove build` currently stops after a full compile check. Native code
 generation is v0.6, and `kove run` executes through the reference
@@ -159,7 +166,7 @@ kove/
 │   └── interpreter/   the tree-walking reference implementation
 ├── std/               the standard library, in Kove       (v0.6/v0.7)
 ├── cli/               the `kove` binary and the driver
-├── formatter/         `kove fmt`                          (v0.7)
+├── formatter/         `kove fmt`
 ├── lsp/               the language server                 (v0.7)
 ├── crates/
 │   └── manifest/      kove.toml and project layout

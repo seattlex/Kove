@@ -15,12 +15,12 @@ native compilation, which starts with an intermediate representation.
 | | Version | State |
 | --- | --- | --- |
 | ✅ | v0.1 Tokenizer | done |
-| ✅ | v0.2 Parser | done, except a source pretty printer |
+| ✅ | v0.2 Parser | done |
 | ✅ | v0.3 Semantic analysis | done |
 | ✅ | v0.4 Type checker | done |
 | ✅ | v0.5 Interpreter | done |
 | ▢ | v0.6 Native compiler | not started |
-| ◐ | v0.7 Package manager, formatter, LSP | `kove new` and manifests only |
+| ◐ | v0.7 Package manager, formatter, LSP | formatter and `kove new` done |
 | ▢ | v1.0 Self-hosting begins | not started |
 
 ## v0.1 — Tokenizer
@@ -39,9 +39,9 @@ Lives in `compiler/lexer`.
 - [x] An AST independent of parser details, with spans preserved
 - [x] Syntax errors that recover and keep going, so one typo is one
       error and several mistakes are all reported
-- [ ] **Pretty printer.** Not done. A debug s-expression dump exists for
-      tests; printing Kove source back out is the formatter's job and is
-      tracked under v0.7.
+- [x] **Pretty printer.** Done, as the formatter: `kove fmt` prints Kove
+      source back out from the concrete tree. (A separate s-expression
+      dump exists for debugging and golden tests.)
 
 Lives in `compiler/parser` and `compiler/ast`.
 
@@ -102,14 +102,15 @@ that can only call `println` is not yet a systems language.
 - [ ] Dependency resolution, lockfiles, semantic versioning
 - [ ] Local and git dependencies (a registry stays a non-goal for now)
 - [ ] `kove test`
-- [ ] **Formatter** (`formatter/`): deterministic, opinionated,
-      idempotent, meaning-preserving
+- [x] **Formatter** (`formatter/`): deterministic, opinionated,
+      idempotent, meaning-preserving, enforced in CI
 - [ ] **Language server** (`lsp/`): diagnostics, highlighting, symbols,
       go-to-definition, find references, hover, rename
 
-The frontend was built for the last two: full-fidelity trees for the
-formatter, incremental reparsing and grammar-level editor annotations
-for the server. Neither gets a second parser.
+The frontend was built for both: full-fidelity trees for the formatter,
+incremental reparsing and grammar-level editor annotations for the
+server. Neither gets a second parser, and the formatter that shipped
+reads the same concrete tree the compiler does.
 
 ## v1.0 — Self-hosting begins
 

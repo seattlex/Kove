@@ -1,35 +1,66 @@
 # formatter
 
-**Status:** not implemented. Lands in v0.7. `kove fmt` exists as a
-command and reports that it is unavailable rather than doing nothing.
+**Status:** implemented. `kove fmt` formats files in place;
+`kove fmt --check` reports without writing and exits non-zero if
+anything would change.
 
-An opinionated formatter with deterministic output. No options, no
-style debates, no configuration file.
+An opinionated formatter with deterministic output. No options, no style
+debates, no configuration file.
 
-## Why it belongs here and not in `compiler/`
+## What it decides
 
-The formatter is not a compile stage. It reads the concrete syntax tree
-and writes text; it never sees the AST, because the AST has thrown away
-exactly what the formatter needs.
+- Four-space indentation, one statement per line.
+- One space around binary operators; none around `..`, so `0..10` reads
+  as one thing.
+- One member per line in struct and enum declarations. They are read far
+  more often than written, and a diff that touches one field should
+  touch one line.
+- Struct literals stay on one line when they fit within 100 columns and
+  contain no comments, and break one field per line when they do not.
+  Width decides, not how the author happened to type it.
+- A single blank line wherever the author left one or more; never two.
+- Exactly one trailing newline.
 
-## Why the CST makes this tractable
+## What it leaves alone
+
+- **Redundant parentheses.** Removing them means reasoning about
+  precedence, and a formatter that can change how an expression groups
+  is one nobody should trust.
+- **Comment placement.** A comment on its own line stays on its own
+  line; a comment trailing code stays on that line; an inline block
+  comment stays inline.
+- **Files that do not parse.** `kove fmt` reports the syntax errors and
+  leaves the file untouched. The tree would be complete enough to walk,
+  but rewriting a file the compiler rejects is not a formatter's call.
+
+## Why the CST makes this work
 
 The parser is built on ReParse, whose trees are full-fidelity: every
 byte of the source is in the tree, comments and whitespace included, and
-`tree.width() == text.len()` for any input at all. A formatter needs
-precisely that. It also means:
+`tree.width() == text.len()` for any input. Comments attach as trivia to
+the following token, which is what lets them be placed deliberately
+rather than lost.
 
-- Broken code can still be formatted, because broken code still parses
-  into a complete tree with error islands.
-- Comments have a defined home (they attach as trivia to the following
-  token), so they can be moved deliberately rather than lost.
+One implementation detail carries the comment handling: line breaks are
+*pending* rather than written immediately. When a trailing comment shows
+up in the next token's leading trivia, the newline the structure asked
+for has not been committed yet, so it can still be taken back and the
+comment lands on the line it was written on.
 
-## Constraints already decided
+## Guarantees, and how they are tested
 
-- Formatting is idempotent: formatting formatted code changes nothing.
-  This gets a test on every example in the repository.
-- Formatting never changes meaning. The token stream after formatting
-  must be identical to the token stream before it, comments aside. That
-  is checkable, and it will be checked.
-- `kove fmt` and the language server's format request share this code.
-  One implementation, per the engineering principles.
+- **Idempotent.** Formatting formatted code changes nothing. Checked on
+  every construct and on every `.kov` file in the repository.
+- **Meaning-preserving.** Formatting never changes the token stream, so
+  it moves whitespace and nothing else. The single exception is a
+  trailing separator (`struct S { a: Int, }`), which is punctuation with
+  no meaning and is normalized away.
+
+CI runs `kove fmt --check` over the repository's Kove sources.
+
+## Not yet
+
+- Long expressions and long call argument lists are not wrapped; only
+  struct literals break on width so far.
+- The language server will share this code when it lands, per the rule
+  that there is one implementation of everything.
