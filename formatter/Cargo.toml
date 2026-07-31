@@ -10,3 +10,6 @@ repository.workspace = true
 reparse = { workspace = true }
 kove-parser = { workspace = true }
 kove-diagnostics = { workspace = true }
+
+[dev-dependencies]
+reparse = { workspace = true }
