@@ -7,6 +7,15 @@
 # after which `git log --show-signature` and `git verify-commit <rev>`
 # will report signatures from these keys as good.
 #
-# Format: <principal> <namespaces> <key>. The `git` namespace is what
-# commit signatures use.
+# Format: <principal> <namespaces> <key>. The principal is matched against
+# the committer's email, and the `git` namespace is what commit
+# signatures use.
+
+# seattlex, signing locally.
 kaspersolo3010@gmail.com namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFlNj9jYgvhaaGRTQJSZqGKexxNX4dzgig1ND6sN8zx8
+
+# The managed key that Claude Code sessions sign with when committing as
+# seattlex. Listed separately so it is obvious which commits came from a
+# session rather than from a local checkout. Remove this line to stop
+# trusting it.
+kaspersolo3010@gmail.com namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKy87HxSEheG8vEPhSs9u2KZCtVErAQfpmprtUJCZ2w7
