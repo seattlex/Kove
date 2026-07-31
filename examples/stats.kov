@@ -1,7 +1,7 @@
 // A slightly larger program: accumulating statistics over a range.
 //
 // Shows structs holding state, compound assignment, enums as results,
-// and early returns.
+// early returns, and converting between Int and Float.
 //
 //     kove run examples/stats.kov
 
@@ -57,11 +57,13 @@ fn observe(summary: Summary, value: Int) -> Summary {
     return next;
 }
 
-fn mean(summary: Summary) -> Int {
+fn mean(summary: Summary) -> Float {
     if summary.count == 0 {
-        return 0;
+        return 0.0;
     }
-    return summary.total / summary.count;
+    // Both operands have to be converted. Dividing the Ints first would
+    // throw away the fraction before the conversion could see it.
+    return to_float(summary.total) / to_float(summary.count);
 }
 
 fn shape(summary: Summary) -> Shape {
