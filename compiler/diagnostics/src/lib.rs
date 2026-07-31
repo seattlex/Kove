@@ -5,6 +5,10 @@
 //! and optionally a label (printed under the carets), a help suggestion and
 //! free-form notes. The full code registry lives in `docs/diagnostics.md`.
 
+pub mod codes;
+
+pub use codes::{explain, CodeInfo, CODES};
+
 use std::fmt;
 
 /// A byte range into a source file. Produced by the frontend and preserved

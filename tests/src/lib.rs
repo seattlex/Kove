@@ -71,6 +71,16 @@ pub fn codes(text: &str) -> Vec<&'static str> {
         .collect()
 }
 
+/// Every diagnostic code produced by the full frontend, errors and
+/// warnings alike, in source order.
+pub fn all_codes(text: &str) -> Vec<&'static str> {
+    kove_cli::compile("test.kov", text)
+        .diagnostics
+        .iter()
+        .map(|d| d.code)
+        .collect()
+}
+
 /// Warning codes produced by the full frontend, in source order.
 pub fn warning_codes(text: &str) -> Vec<&'static str> {
     kove_cli::compile("test.kov", text)

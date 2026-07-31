@@ -328,3 +328,28 @@ fn tests_do_not_need_a_main() {
         String::from_utf8_lossy(&out.stderr)
     );
 }
+
+#[test]
+fn explain_prints_a_code_and_rejects_an_unknown_one() {
+    let out = kove(&["explain", "E0012"]);
+    assert!(out.status.success());
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(text.starts_with("E0012: mismatched types"), "{text}");
+    assert!(
+        text.contains("never converts between types implicitly"),
+        "{text}"
+    );
+
+    // Case does not matter.
+    assert!(kove(&["explain", "e0012"]).status.success());
+    assert!(kove(&["explain", "w0001"]).status.success());
+
+    let out = kove(&["explain", "E9999"]);
+    assert_eq!(out.status.code(), Some(2));
+    assert!(String::from_utf8(out.stderr)
+        .unwrap()
+        .contains("not a diagnostic code"));
+
+    // And it needs an argument.
+    assert_eq!(kove(&["explain"]).status.code(), Some(2));
+}

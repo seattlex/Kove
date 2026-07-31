@@ -22,6 +22,7 @@ COMMANDS:
     run [file]      Compile and execute the program
     check [file]    Report diagnostics without running
     test [file]     Run every `test_...` function in the program
+    explain <code>  Explain a diagnostic code, such as E0012
     fmt [path]...   Format .kov files in place (--check to only report)
     version         Print the toolchain version
     help            Print this message
@@ -40,6 +41,7 @@ fn main() -> ExitCode {
         Some("run") => run(args.get(1)),
         Some("check") => build_or_check(args.get(1), Mode::Check),
         Some("test") => test(args.get(1)),
+        Some("explain") => explain(args.get(1)),
         Some("fmt") => fmt(&args[1..]),
         Some("version") | Some("--version") | Some("-V") => {
             println!("kove {}", env!("CARGO_PKG_VERSION"));
@@ -399,4 +401,32 @@ fn test(arg: Option<&String>) -> ExitCode {
     }
     eprintln!("{passed} passed, {} failed", failures.len());
     ExitCode::from(1)
+}
+
+/// `kove explain <code>`
+///
+/// Prints the long form of a diagnostic code. The codes are stable, so
+/// this is also what documentation and search results can point at.
+fn explain(code: Option<&String>) -> ExitCode {
+    let Some(code) = code else {
+        eprintln!("error: `kove explain` needs a diagnostic code, like `kove explain E0012`");
+        return ExitCode::from(2);
+    };
+    match kove_diagnostics::explain(code) {
+        Some(info) => {
+            println!("{}: {}\n", info.code, info.summary);
+            println!("{}", info.explanation);
+            ExitCode::SUCCESS
+        }
+        None => {
+            eprintln!("error: `{code}` is not a diagnostic code Kove emits");
+            // A wrong prefix is the most likely mistake, so say what the
+            // bands mean rather than just refusing.
+            eprintln!(
+                "note: errors are `E....` and warnings are `W....`; \
+                 the full list is in docs/diagnostics.md"
+            );
+            ExitCode::from(2)
+        }
+    }
 }
