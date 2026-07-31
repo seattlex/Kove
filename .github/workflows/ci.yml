@@ -48,6 +48,10 @@ jobs:
             cargo run --quiet -- run "$f"
           done
 
+      # Kove's own test runner, on Kove code.
+      - name: Run the Kove test suite
+        run: cargo run --quiet -- test examples/tests.kov
+
       # Kove code in the repository is formatted by Kove's own formatter.
       # tests/programs/invalid is excluded: those files do not parse by
       # design, and fmt refuses input the compiler would reject.
