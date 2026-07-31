@@ -104,6 +104,58 @@ fn builtin_names_are_reserved() {
     assert_code("fn assert(c: Bool) { }\nfn main() { }", "E0205");
 }
 
+// --- Suggestions -----------------------------------------------------------
+
+/// The `help:` texts of a program's diagnostics.
+fn helps(src: &str) -> Vec<String> {
+    kove_cli::compile("test.kov", src)
+        .diagnostics
+        .iter()
+        .filter_map(|d| d.help.clone())
+        .collect()
+}
+
+#[test]
+fn a_mistyped_variable_suggests_one_in_scope() {
+    let helps = helps("fn main() { let length = 3; println(lenght); }");
+    assert!(
+        helps.iter().any(|h| h == "did you mean `length`?"),
+        "{helps:?}"
+    );
+}
+
+#[test]
+fn a_mistyped_type_suggests_a_known_one() {
+    assert!(helps("fn main() { let x: Strng = \"s\"; }")
+        .iter()
+        .any(|h| h == "did you mean `String`?"));
+    assert!(
+        helps("struct Point { x: Int }\nfn f(p: Pont) { }\nfn main() { }")
+            .iter()
+            .any(|h| h == "did you mean `Point`?")
+    );
+}
+
+#[test]
+fn a_mistyped_function_suggests_a_declared_one_or_a_builtin() {
+    assert!(helps("fn distance() { }\nfn main() { distence(); }")
+        .iter()
+        .any(|h| h == "did you mean `distance`?"));
+    assert!(helps("fn main() { prntln(1); }")
+        .iter()
+        .any(|h| h == "did you mean `println`?"));
+}
+
+#[test]
+fn nothing_is_suggested_when_nothing_is_close() {
+    // A wrong guess is worse than no guess.
+    let helps = helps("fn main() { let length = 3; println(banana); }");
+    assert!(
+        !helps.iter().any(|h| h.starts_with("did you mean")),
+        "{helps:?}"
+    );
+}
+
 // --- The resolution map ----------------------------------------------------
 
 /// The `Var` expressions in the first function's body, in source order.

@@ -22,6 +22,8 @@
 //! not named functions (E0230). Anything about *types* belongs to
 //! `kove-typechecker`.
 
+mod suggest;
+
 use kove_ast::*;
 use kove_diagnostics::{Diagnostic, Span};
 use std::collections::HashMap;
@@ -424,16 +426,46 @@ impl Resolver {
         }
         let resolved = self.out.type_ref(t);
         if resolved == TypeRef::Error {
-            self.diags.push(
+            let mut d =
                 Diagnostic::error("E0200", format!("cannot find type `{}`", t.name), t.span)
-                    .with_label("not a known type")
-                    .with_help(
-                        "the primitive types are Int, Float, Bool, Char and String; \
-                         structs and enums must be declared in this file",
-                    ),
-            );
+                    .with_label("not a known type");
+            d = match self.closest_type(&t.name) {
+                Some(name) => d.with_help(format!("did you mean `{}`?", name)),
+                None => d.with_help(
+                    "the primitive types are Int, Float, Bool, Char and String; \
+                     structs and enums must be declared in this file",
+                ),
+            };
+            self.diags.push(d);
         }
         resolved
+    }
+
+    /// Type names in scope: the primitives plus every declared struct and
+    /// enum.
+    fn closest_type(&self, name: &str) -> Option<String> {
+        let declared: Vec<&str> = self
+            .out
+            .struct_by_name
+            .keys()
+            .chain(self.out.enum_by_name.keys())
+            .map(String::as_str)
+            .collect();
+        let candidates = ["Int", "Float", "Bool", "Char", "String"]
+            .into_iter()
+            .chain(declared);
+        suggest::closest(name, candidates).map(str::to_string)
+    }
+
+    /// Every variable currently visible, innermost scope first.
+    fn visible_locals(&self) -> Vec<&str> {
+        let mut out = Vec::new();
+        for scope in self.scopes.iter().rev() {
+            for name in scope.keys() {
+                out.push(name.as_str());
+            }
+        }
+        out
     }
 
     // --- Pass 2: bodies ---------------------------------------------------
@@ -602,7 +634,9 @@ impl Resolver {
                             e.span,
                         )
                         .with_label("not found in this scope");
-                        if self.out.func_by_name.contains_key(name) {
+                        if let Some(similar) = suggest::closest(name, self.visible_locals()) {
+                            d = d.with_help(format!("did you mean `{}`?", similar));
+                        } else if self.out.func_by_name.contains_key(name) {
                             d = d.with_help(format!(
                                 "`{}` is a function; did you mean to call it: `{}(...)`?",
                                 name, name
@@ -677,7 +711,16 @@ impl Resolver {
                     callee.span,
                 )
                 .with_label("not defined anywhere in this file");
-                if self.lookup(name).is_some() {
+                let known: Vec<&str> = self
+                    .out
+                    .func_by_name
+                    .keys()
+                    .map(String::as_str)
+                    .chain(Builtin::ALL.iter().map(|b| b.name()))
+                    .collect();
+                if let Some(similar) = suggest::closest(name, known) {
+                    d = d.with_help(format!("did you mean `{}`?", similar));
+                } else if self.lookup(name).is_some() {
                     d = d.with_help(format!("`{}` is a variable, not a function", name));
                 }
                 self.diags.push(d);
