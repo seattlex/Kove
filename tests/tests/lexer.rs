@@ -76,6 +76,15 @@ fn string_and_char_literals() {
 }
 
 #[test]
+fn unicode_escapes_are_single_char_literals() {
+    let toks = tokens(r"fn f() { let c = '\u{1F600}'; }");
+    assert!(
+        toks.contains(&("char".into(), r"'\u{1F600}'".into())),
+        "{toks:?}"
+    );
+}
+
+#[test]
 fn unterminated_string_is_reported() {
     assert!(codes("fn main() { let s = \"oops;\n}").contains(&"E0112"));
 }

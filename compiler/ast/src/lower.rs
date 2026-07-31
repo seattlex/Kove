@@ -598,6 +598,7 @@ impl<'a> Lowerer<'a> {
                 Some((_, '\\')) => out.push('\\'),
                 Some((_, '"')) => out.push('"'),
                 Some((_, '\'')) => out.push('\''),
+                Some((_, 'u')) => self.unicode_escape(&mut chars, base, i, &mut out),
                 Some((j, other)) => {
                     let start = base + i as u32;
                     let end = base + j as u32 + other.len_utf8() as u32;
@@ -607,7 +608,9 @@ impl<'a> Lowerer<'a> {
                             format!("unknown escape sequence `\\{}`", other.escape_default()),
                             Span::new(start, end),
                         )
-                        .with_help("supported escapes are \\n, \\t, \\r, \\0, \\\\, \\\" and \\'"),
+                        .with_help(
+                            "supported escapes are \\n, \\t, \\r, \\0, \\\\, \\\", \\' and \\u{...}",
+                        ),
                     );
                     out.push(other);
                 }
@@ -615,6 +618,96 @@ impl<'a> Lowerer<'a> {
             }
         }
         out
+    }
+
+    /// `\u{...}`, already past the `u`.
+    ///
+    /// Anything wrong with the braces, the digits or the resulting scalar
+    /// is E0115. The escape contributes nothing to the string in that
+    /// case, since there is no sensible character to substitute.
+    fn unicode_escape<I>(
+        &mut self,
+        chars: &mut std::iter::Peekable<I>,
+        base: u32,
+        start: usize,
+        out: &mut String,
+    ) where
+        I: Iterator<Item = (usize, char)>,
+    {
+        let report = |l: &mut Self, end: usize, message: String, help: &str| {
+            l.diags.push(
+                Diagnostic::error(
+                    "E0115",
+                    message,
+                    Span::new(base + start as u32, base + end as u32),
+                )
+                .with_help(help.to_string()),
+            );
+        };
+
+        // `{` has to come next.
+        if !matches!(chars.peek(), Some((_, '{'))) {
+            report(
+                self,
+                start + 2,
+                "`\\u` must be followed by braces".to_string(),
+                "write the code point in braces, such as `\\u{1F600}`",
+            );
+            return;
+        }
+        chars.next();
+
+        let mut hex = String::new();
+        let mut end = start + 2;
+        let mut closed = false;
+        for (k, c) in chars.by_ref() {
+            end = k + c.len_utf8();
+            if c == '}' {
+                closed = true;
+                break;
+            }
+            hex.push(c);
+        }
+
+        if !closed {
+            report(
+                self,
+                end,
+                "unclosed `\\u{` escape".to_string(),
+                "close it with `}`",
+            );
+            return;
+        }
+        if hex.is_empty() {
+            report(
+                self,
+                end,
+                "`\\u{}` needs a code point".to_string(),
+                "write the hexadecimal code point, such as `\\u{41}`",
+            );
+            return;
+        }
+        if hex.len() > 6 || !hex.chars().all(|c| c.is_ascii_hexdigit()) {
+            report(
+                self,
+                end,
+                format!("`{}` is not a hexadecimal code point", hex),
+                "use up to six hexadecimal digits, such as `\\u{1F600}`",
+            );
+            return;
+        }
+
+        let value = u32::from_str_radix(&hex, 16).expect("checked to be hex digits");
+        match char::from_u32(value) {
+            Some(c) => out.push(c),
+            // Surrogates and anything past U+10FFFF are not characters.
+            None => report(
+                self,
+                end,
+                format!("`\\u{{{}}}` is not a Unicode scalar value", hex),
+                "the largest code point is 10FFFF, and D800 to DFFF are not characters",
+            ),
+        }
     }
 }
 

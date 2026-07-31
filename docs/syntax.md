@@ -17,8 +17,8 @@ Tokens are matched longest-first, so `1.5` is one float token while
 | identifier | `[A-Za-z_][A-Za-z0-9_]*` |
 | int | `[0-9]+` |
 | float | `[0-9]+.[0-9]+` |
-| string | `"..."` with escapes `\n \t \r \0 \\ \" \'` |
-| char | `'x'` or `'\n'` (one character) |
+| string | `"..."` with escapes `\n \t \r \0 \\ \" \'` and `\u{...}` |
+| char | `'x'`, `'\n'` or `'\u{1F600}'` (one Unicode scalar) |
 | line comment | `// to end of line` |
 | block comment | `/* ... */` (non-nesting, must be closed) |
 

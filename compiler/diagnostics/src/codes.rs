@@ -123,6 +123,17 @@ comment and the first `*/` closes it. An unclosed comment is an error
 rather than a silent comment to the end of the file, because that
 silently deletes code.",
     },
+    CodeInfo {
+        code: "E0115",
+        summary: "invalid unicode escape",
+        explanation: "\
+A `\\u{...}` escape is malformed or does not name a character.
+
+The braces are required, the digits are hexadecimal, and there are at
+most six of them. The value also has to be a Unicode scalar: the largest
+code point is 10FFFF, and D800 through DFFF are reserved for UTF-16
+surrogate pairs and are not characters on their own.",
+    },
     // --- Types and names ---------------------------------------------
     CodeInfo {
         code: "E0012",

@@ -171,6 +171,40 @@ fn integer_overflow_is_reported() {
 }
 
 #[test]
+fn unicode_escapes_decode() {
+    let p = program(r#"fn f() { let s = "caf\u{e9} \u{1F600}"; let c = '\u{41}'; }"#);
+    let Item::Function(f) = &p.items[0] else {
+        panic!("expected a function");
+    };
+    let Stmt::Let { value, .. } = &f.body.stmts[0] else {
+        panic!("expected a let");
+    };
+    assert!(
+        matches!(&value.kind, ExprKind::Str(s) if s == "caf\u{e9} \u{1F600}"),
+        "{:?}",
+        value.kind
+    );
+    let Stmt::Let { value, .. } = &f.body.stmts[1] else {
+        panic!("expected a let");
+    };
+    assert!(matches!(&value.kind, ExprKind::Char('A')));
+}
+
+#[test]
+fn malformed_unicode_escapes_are_reported() {
+    for src in [
+        r#"fn main() { let s = "\u41"; }"#,
+        r#"fn main() { let s = "\u{}"; }"#,
+        r#"fn main() { let s = "\u{110000}"; }"#,
+        r#"fn main() { let s = "\u{D800}"; }"#,
+        r#"fn main() { let s = "\u{zz}"; }"#,
+        r#"fn main() { let s = "\u{41"; }"#,
+    ] {
+        assert!(codes(src).contains(&"E0115"), "expected E0115 for {src:?}");
+    }
+}
+
+#[test]
 fn unknown_escape_is_reported() {
     assert!(codes(r#"fn main() { let s = "a\qb"; }"#).contains(&"E0111"));
     // ...with a span on the escape itself.

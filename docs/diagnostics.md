@@ -48,6 +48,7 @@ an optional label; then optional `help:` (a suggestion) and `note:`
 | E0112 | Unterminated string literal. |
 | E0113 | Unterminated character literal. |
 | E0114 | Unterminated block comment. |
+| E0115 | A `\u{...}` escape that is malformed or does not name a Unicode scalar value. |
 
 ## Semantic errors (E0012, E02xx)
 

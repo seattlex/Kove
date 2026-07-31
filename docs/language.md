@@ -50,8 +50,20 @@ let _unused = compute();
 | `Int` | 64-bit signed integers | arithmetic is overflow-checked at runtime (E0302) |
 | `Float` | 64-bit IEEE 754 | IEEE semantics: `1.0 / 0.0` is `inf`, no overflow errors |
 | `Bool` | `true`, `false` | conditions must be `Bool`, there is no truthiness (E0211) |
-| `Char` | one Unicode scalar | written `'k'`, `'\n'` |
+| `Char` | one Unicode scalar | written `'k'`, `'\n'`, `'\u{1F600}'` |
 | `String` | immutable UTF-8 text | written `"text"` |
+
+Escape sequences in strings and character literals are `\n`, `\t`,
+`\r`, `\0`, `\\`, `\"`, `\'`, and `\u{...}` for a code point written
+in hexadecimal:
+
+```kov
+println("caf\u{e9}");     // café
+println('\u{1F600}');     // an emoji, which is one Char
+```
+
+A `\u{...}` escape has to name a Unicode scalar value, so at most six
+hex digits, nothing above 10FFFF, and not a surrogate (E0115).
 
 `Int` and `Float` never mix implicitly (E0212). `1 + 1.5` is an error;
 write `1.0 + 1.5`. Sized types (`Int32`, `Float32`, ...) are reserved

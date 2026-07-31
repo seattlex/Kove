@@ -197,8 +197,10 @@ pub fn register(g: &mut GrammarBuilder) -> Tokens {
     let string_open = g
         .token(names::UNTERMINATED_STRING, r#""([^"\\\n]|\\.)*\\?"#)
         .expect("unterminated string pattern is valid");
+    // The `\u{...}` alternative has to come before `\\.`, which would
+    // otherwise match just the `\u` and leave the braces outside.
     let char_lit = g
-        .token(names::CHAR, r"'([^'\\\n]|\\.)'")
+        .token(names::CHAR, r"'([^'\\\n]|\\u\{[0-9a-fA-F]+\}|\\.)'")
         .expect("char pattern is valid");
     let char_open = g
         .token(names::UNTERMINATED_CHAR, r"'([^'\\\n]|\\.)?")
