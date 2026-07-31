@@ -12,6 +12,14 @@ The workspace layout and each crate's role are described in
 [docs/compiler.md](docs/compiler.md), which also has the step-by-step
 checklist for adding a language feature.
 
+## Direction
+
+[docs/north-star.md](docs/north-star.md) is the tiebreaker for design
+questions: Rust's safety, Go's simplicity, Zig's tooling, self-hosted in
+the long term. When proposing a change, say which clause it serves and
+what it costs the others. [docs/roadmap.md](docs/roadmap.md) says what
+version the work belongs to.
+
 ## Engineering principles
 
 These are the project's standing rules. Changes are reviewed against
@@ -21,13 +29,19 @@ them.
 - No syntax without documented semantics. If it parses, its behavior is
   written down in [docs/language.md](docs/language.md) and
   [docs/syntax.md](docs/syntax.md) in the same change.
-- Never duplicate compiler logic. There is one grammar
-  (`compiler/syntax`) and it serves the compiler and the future LSP
-  alike. The same goes for every later stage.
+- Never duplicate compiler logic. There is one token vocabulary
+  (`compiler/lexer`) and one grammar (`compiler/parser`), and they serve
+  the compiler, the future formatter and the future LSP alike. The same
+  goes for every later stage.
 - Preserve source spans throughout compilation. Every AST node and
   diagnostic points at real bytes; nothing may drop spans.
 - Prefer explicit representations over clever abstractions.
-- Keep compiler phases modular: separate crates, testable alone.
+- Keep compiler phases modular: one crate per stage, testable alone.
+  Self-hosting means porting them one at a time, so a stage that cannot
+  be understood alone cannot be ported alone.
+- A stage never redoes an earlier stage's work. The type checker does
+  not resolve names; the backend will not re-derive types. If you need
+  something an earlier stage knew, have it record the answer.
 - Write tests alongside each feature, including intentionally invalid
   programs. New diagnostics get a code in
   [docs/diagnostics.md](docs/diagnostics.md) and a test asserting it.

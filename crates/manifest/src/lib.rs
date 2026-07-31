@@ -69,7 +69,7 @@ impl Manifest {
                 }
                 "dependencies" => {
                     return Err(format!(
-                        "line {n}: dependencies are not supported yet; the package manager is a later roadmap phase"
+                        "line {n}: dependencies are not supported yet; dependency resolution lands in v0.7"
                     ));
                 }
                 _ => {

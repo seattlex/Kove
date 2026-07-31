@@ -38,7 +38,7 @@ fn main() -> ExitCode {
         Some("run") => run(args.get(1)),
         Some("check") => build_or_check(args.get(1), Mode::Check),
         Some("fmt") => {
-            eprintln!("`kove fmt` is not implemented yet; the formatter is a later roadmap phase.");
+            eprintln!("`kove fmt` is not implemented yet; the formatter lands in v0.7.");
             ExitCode::from(2)
         }
         Some("version") | Some("--version") | Some("-V") => {
@@ -169,7 +169,7 @@ fn build_or_check(arg: Option<&String>, mode: Mode) -> ExitCode {
         Mode::Check => println!("checked `{path}`: no errors found"),
         Mode::Build => println!(
             "checked `{path}`: no errors found\n\
-             note: native code generation is not implemented yet (roadmap phase 7); \
+             note: native code generation is not implemented yet (v0.6); \
              use `kove run {path}` to execute the program"
         ),
     }

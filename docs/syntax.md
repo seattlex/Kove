@@ -1,11 +1,11 @@
 # Kove syntax reference
 
-The grammar as implemented in `compiler/syntax`, which is the single
-source of truth; this document mirrors it. The grammar is defined
-declaratively on the [ReParse](https://github.com/seattlex/ReParse)
-engine, which gives every construct error recovery: any input, no matter
-how broken, parses to a complete tree with explicit `missing` tokens and
-error islands.
+The grammar as implemented in `compiler/lexer` (tokens) and
+`compiler/parser` (rules), which together are the single source of
+truth; this document mirrors them. Both are defined declaratively on the
+[ReParse](https://github.com/seattlex/ReParse) engine, which gives every
+construct error recovery: any input, no matter how broken, parses to a
+complete tree with explicit `missing` tokens and error islands.
 
 ## Lexical structure
 

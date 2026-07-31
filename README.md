@@ -1,9 +1,15 @@
 # Kove
 
-Kove is a statically typed, compiled programming language built as a
-self-contained ecosystem. The name is a stylized spelling of "cove": a
-contained, sheltered environment. The point is that the language ships
-with its own coherent toolchain instead of leaning on external tools.
+> Kove is a modern systems programming language that combines Rust's
+> safety, Go's simplicity, and Zig's straightforward tooling, while
+> remaining entirely self-hosted in the long term.
+
+That is the [North Star](docs/north-star.md), and it is what settles
+design questions that have two defensible answers.
+
+The name is a stylized spelling of "cove": a contained, sheltered
+environment. The language ships with its own coherent toolchain rather
+than leaning on external tools.
 
 Source files use the `.kov` extension:
 
@@ -21,25 +27,27 @@ fn main() {
 }
 ```
 
-## Status
+## Status: v0.5
 
-Kove is at its first milestone: a working frontend (lexer, parser, AST,
-type checker), a reference interpreter, and the `kove` CLI. It's a young
-language, and the table below is honest about what exists and what
-doesn't.
+A Kove program can be written, checked with real diagnostics, and run.
+Native compilation is the next substantial piece of work. The full
+[roadmap](docs/roadmap.md) has the detail; the short version:
 
-| Phase | | |
+| | Version | State |
 | --- | --- | --- |
-| 1 | Lexer | done (via [ReParse]) |
-| 2 | Parser | done (via [ReParse], with error recovery) |
-| 3 | AST with spans | done |
-| 4 | Type checker | done |
-| 5 | Interpreter (`kove run`) | done |
-| 6 | Intermediate representation | not yet |
-| 7 | Native backend (x86-64 Linux first) | not yet |
-| 8 | Standard library | not yet |
-| 9 | Package manager | started (`kove new` + kove.toml) |
-| 10 | LSP + formatter | not yet (the frontend is already LSP-ready) |
+| ✅ | v0.1 Tokenizer | done |
+| ✅ | v0.2 Parser | done, except a source pretty printer |
+| ✅ | v0.3 Semantic analysis | done |
+| ✅ | v0.4 Type checker | done |
+| ✅ | v0.5 Interpreter | done |
+| ▢ | v0.6 Native compiler | not started |
+| ◐ | v0.7 Package manager, formatter, LSP | `kove new` and manifests only |
+| ▢ | v1.0 Self-hosting begins | not started |
+
+Directories for the parts that do not exist yet are not empty: each one
+carries a README with the constraints already decided and the questions
+still open, so the next piece of work starts from a design rather than a
+blank page.
 
 The frontend runs on [ReParse], our incremental parser engine. One
 grammar definition powers batch compilation today and will power the
@@ -94,8 +102,8 @@ current project's `src/main.kov`. Exit codes are stable for CI: `0`
 success, `1` the program has errors, `2` the CLI was misused.
 
 `kove build` currently stops after a full compile check. Native code
-generation is roadmap phase 7, and `kove run` executes through the
-reference interpreter until it lands.
+generation is v0.6, and `kove run` executes through the reference
+interpreter until it lands.
 
 ## Diagnostics
 
@@ -128,6 +136,43 @@ The output format is golden-tested, so it's a contract, not an accident.
 - [CONTRIBUTING.md](CONTRIBUTING.md) - engineering principles and how to
   work on the compiler
 - [CHANGELOG.md](CHANGELOG.md) - what has landed so far
+- [docs/north-star.md](docs/north-star.md) - the one-sentence direction
+  and what each clause commits us to
+- [docs/roadmap.md](docs/roadmap.md) - versions v0.1 to v1.0
+
+## Repository layout
+
+```text
+kove/
+├── compiler/
+│   ├── lexer/         the token vocabulary
+│   ├── parser/        the grammar, recovery, concrete syntax tree
+│   ├── ast/           AST types and CST -> AST lowering
+│   ├── resolver/      symbol tables, scopes, name resolution
+│   ├── typechecker/   types, and only types
+│   ├── hir/           desugared + resolved + typed        (v0.6)
+│   ├── mir/           basic blocks and control flow       (v0.6)
+│   ├── backend/       native code generation              (v0.6)
+│   └── diagnostics/   diagnostic types and the renderer
+│
+├── runtime/
+│   └── interpreter/   the tree-walking reference implementation
+├── std/               the standard library, in Kove       (v0.6/v0.7)
+├── cli/               the `kove` binary and the driver
+├── formatter/         `kove fmt`                          (v0.7)
+├── lsp/               the language server                 (v0.7)
+├── crates/
+│   └── manifest/      kove.toml and project layout
+├── tests/             one suite per stage + fixture programs
+├── docs/
+└── examples/
+```
+
+One crate per pipeline stage, each independently testable, because
+self-hosting means porting them one at a time. `crates/` holds the
+pieces that are not compiler stages and get shared: `manifest` is
+needed by the CLI today and by the package manager and language server
+later.
 
 ## License
 
@@ -138,21 +183,3 @@ Dual-licensed under either of
 
 at your option, matching [ReParse](https://github.com/seattlex/ReParse)
 so the two projects stay compatible.
-
-## Repository layout
-
-```text
-kove/
-├── compiler/
-│   ├── syntax/        the Kove grammar on ReParse (lexer + parser + CST)
-│   ├── ast/           AST types and CST -> AST lowering
-│   ├── typechecker/   name resolution and type checking
-│   └── diagnostics/   diagnostic types and the terminal renderer
-├── runtime/
-│   └── interpreter/   the tree-walking reference interpreter
-├── cli/               the `kove` binary, the driver, project files
-├── tests/             lexer / parser / ast / typecheck / diagnostics /
-│                      compiler / integration suites + fixture programs
-├── docs/
-└── examples/
-```

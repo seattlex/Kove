@@ -36,6 +36,13 @@ an optional label; then optional `help:` (a suggestion) and `note:`
 
 ## Semantic errors (E0012, E02xx)
 
+Two stages produce these. `compiler/resolver` owns the ones about
+*names* (E0200 to E0202, E0204, E0205, E0213, E0216, E0217, E0219,
+E0230); `compiler/typechecker` owns the ones about *types* (E0012,
+E0203, E0206 to E0212, E0214, E0215, E0218). A name the resolver could
+not resolve becomes an error type, so it never produces a second
+diagnostic downstream.
+
 | Code | Meaning |
 | --- | --- |
 | E0012 | Mismatched types (annotation vs value, argument vs parameter, return vs declared type, assignment vs variable type, range bounds). |
