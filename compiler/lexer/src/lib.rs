@@ -61,6 +61,12 @@ pub struct Tokens {
     pub arrow: TokenKind,
     // Operators
     pub eq: TokenKind,
+    // Compound assignment
+    pub plus_eq: TokenKind,
+    pub minus_eq: TokenKind,
+    pub star_eq: TokenKind,
+    pub slash_eq: TokenKind,
+    pub percent_eq: TokenKind,
     pub eqeq: TokenKind,
     pub neq: TokenKind,
     pub lt: TokenKind,
@@ -114,10 +120,27 @@ impl Tokens {
         ]
     }
 
-    /// Every operator token, for highlighting.
-    pub fn operators(&self) -> [TokenKind; 19] {
+    /// Every token that assigns, `=` and the compound forms.
+    pub fn assignment_operators(&self) -> [TokenKind; 6] {
         [
             self.eq,
+            self.plus_eq,
+            self.minus_eq,
+            self.star_eq,
+            self.slash_eq,
+            self.percent_eq,
+        ]
+    }
+
+    /// Every operator token, for highlighting.
+    pub fn operators(&self) -> [TokenKind; 24] {
+        [
+            self.eq,
+            self.plus_eq,
+            self.minus_eq,
+            self.star_eq,
+            self.slash_eq,
+            self.percent_eq,
             self.eqeq,
             self.neq,
             self.le,
@@ -203,6 +226,13 @@ pub fn register(g: &mut GrammarBuilder) -> Tokens {
         dotdot: g.punct(".."),
         arrow: g.punct("->"),
         eq: g.punct("="),
+        // Longest match keeps these one token, so `x += 1` never lexes as
+        // `x`, `+`, `=`.
+        plus_eq: g.punct("+="),
+        minus_eq: g.punct("-="),
+        star_eq: g.punct("*="),
+        slash_eq: g.punct("/="),
+        percent_eq: g.punct("%="),
         eqeq: g.punct("=="),
         neq: g.punct("!="),
         le: g.punct("<="),

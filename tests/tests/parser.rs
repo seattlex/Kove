@@ -199,6 +199,24 @@ fn a_trailing_comma_is_allowed_in_every_list() {
 }
 
 #[test]
+fn compound_assignment_operators_are_single_tokens() {
+    // Longest match: `+=` is one token, so this is an assignment and not
+    // `x` plus an empty something.
+    let tree = sexpr("fn f() { x += 1; y.z *= 2; }");
+    assert!(tree.contains("op: '+='"), "{tree}");
+    assert!(tree.contains("op: '*='"), "{tree}");
+    for src in [
+        "fn f() { x += 1; }",
+        "fn f() { x -= 1; }",
+        "fn f() { x *= 2; }",
+        "fn f() { x /= 2; }",
+        "fn f() { x %= 2; }",
+    ] {
+        assert!(!parse(src).tree().has_errors(), "{src:?}");
+    }
+}
+
+#[test]
 fn assignment_targets() {
     let tree = sexpr("fn f() { x = 1; user.age = 2; }");
     assert!(tree.contains("(assignment_statement target: 'x'"), "{tree}");

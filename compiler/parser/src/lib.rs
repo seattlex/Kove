@@ -188,11 +188,16 @@ fn build_language() -> Arc<Language> {
         ]),
     );
 
+    // `x = v` plus the compound forms. Lowering desugars `x += v` into
+    // `x = x + v`, so nothing after the AST knows they exist.
     let assign_stmt = g.rule(
         "assignment_statement",
         seq(vec![
             field("target", r(postfix_expr)),
-            t(k.eq),
+            field(
+                "op",
+                choice(k.assignment_operators().iter().copied().map(t).collect()),
+            ),
             field("value", r(expression)),
             t(k.semi),
         ]),
