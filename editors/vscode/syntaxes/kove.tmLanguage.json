@@ -128,7 +128,7 @@
         {
           "comment": "The built-ins get their own scope so they read as language, not user code.",
           "name": "support.function.builtin.kove",
-          "match": "\\b(println|assert)\\b(?=\\s*\\()"
+          "match": "\\b(println|assert|to_float|to_int)\\b(?=\\s*\\()"
         },
         {
           "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=\\s*\\()",

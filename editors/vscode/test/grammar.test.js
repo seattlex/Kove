@@ -74,6 +74,33 @@ test("the grammar covers every keyword the language reserves", () => {
   }
 });
 
+test("the grammar's built-ins are the compiler's built-ins", () => {
+  // The one list in this file that can be checked against the source of
+  // truth instead of maintained by hand. Adding a builtin to the
+  // resolver and not here would leave it highlighted as user code.
+  const resolver = fs.readFileSync(
+    path.join(root, "../../compiler/resolver/src/lib.rs"),
+    "utf8"
+  );
+  const impl = resolver.slice(resolver.indexOf("impl Builtin"));
+  const expected = [...impl.matchAll(/Builtin::\w+ => "(\w+)"/g)].map(
+    (m) => m[1]
+  );
+  assert.ok(expected.length > 0, "found no builtin names in the resolver");
+
+  const builtins = grammar.repository.calls.patterns.find((p) =>
+    (p.name || "").startsWith("support.function.builtin")
+  );
+  assert.ok(builtins, "no built-in call pattern in the grammar");
+  const listed = /\(([a-z_|]+)\)/.exec(builtins.match);
+  assert.ok(listed, `no alternation in ${builtins.match}`);
+  assert.deepStrictEqual(
+    listed[1].split("|").sort(),
+    expected.sort(),
+    "the grammar and the resolver disagree about what is built in"
+  );
+});
+
 test("keyword patterns use word boundaries", () => {
   // Without \b, `information` would highlight `in` and `format` would
   // highlight `for`.
