@@ -136,6 +136,16 @@ fn assert_takes_one_bool() {
 }
 
 #[test]
+fn compound_assignment_type_checks_like_the_long_form() {
+    assert_ok("fn main() { let mut x = 1; x += 2; }");
+    assert_ok("fn main() { let mut x = 1.0; x /= 2.0; }");
+    // Mixing types is an operator error, exactly as `x = x + \"s\"` would be.
+    assert_code("fn main() { let mut x = 1; x += \"s\"; }", "E0212");
+    assert_code("fn main() { let mut x = 1; x += 1.5; }", "E0212");
+    assert_code("fn main() { let mut b = true; b += true; }", "E0212");
+}
+
+#[test]
 fn e0215_unprintable_value() {
     assert_code(
         "struct P { x: Int }\nfn main() { println(P { x: 1 }); }",

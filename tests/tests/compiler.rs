@@ -136,6 +136,37 @@ fn e0304_recursion_limit() {
 }
 
 #[test]
+fn compound_assignment_runs() {
+    let out = run("struct C { hits: Int }\n\
+         fn main() {\n\
+             let mut n = 10;\n\
+             n += 5;\n\
+             n -= 3;\n\
+             n *= 2;\n\
+             n /= 4;\n\
+             n %= 4;\n\
+             println(n);\n\
+             let mut c = C { hits: 0 };\n\
+             c.hits += 7;\n\
+             println(c.hits);\n\
+         }");
+    assert_eq!(out, "2\n7\n");
+}
+
+#[test]
+fn compound_assignment_is_checked_like_any_arithmetic() {
+    // The desugaring inherits the overflow and divide-by-zero checks.
+    assert_eq!(
+        run_expecting_runtime_error("fn main() { let mut x = 9223372036854775807; x += 1; }"),
+        "E0302"
+    );
+    assert_eq!(
+        run_expecting_runtime_error("fn main() { let z = 0; let mut x = 1; x /= z; }"),
+        "E0301"
+    );
+}
+
+#[test]
 fn e0306_failed_assertion() {
     assert_eq!(
         run_expecting_runtime_error("fn main() { assert(1 == 2); }"),

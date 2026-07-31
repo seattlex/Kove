@@ -121,6 +121,51 @@ fn parenthesized_expressions_disappear() {
 }
 
 #[test]
+fn compound_assignment_desugars_to_a_plain_assignment() {
+    let p = program("fn f() { let mut x = 0; x += 2; }");
+    let Item::Function(f) = &p.items[0] else {
+        panic!("expected a function");
+    };
+    let Stmt::Assign { target, value, .. } = &f.body.stmts[1] else {
+        panic!("expected an assignment");
+    };
+    assert!(matches!(&target.kind, ExprKind::Var(n) if n == "x"));
+    // The value is `x + 2`, built here rather than anywhere later.
+    let ExprKind::Binary { op, lhs, rhs, .. } = &value.kind else {
+        panic!("expected a binary expression, got {:?}", value.kind);
+    };
+    assert_eq!(*op, BinaryOp::Add);
+    assert!(matches!(&lhs.kind, ExprKind::Var(n) if n == "x"));
+    assert!(matches!(&rhs.kind, ExprKind::Int(2)));
+    // The two copies of the target are distinct nodes, which matters
+    // because the resolver keys references by id.
+    assert_ne!(target.id, lhs.id);
+}
+
+#[test]
+fn every_compound_operator_desugars() {
+    for (src, want) in [
+        ("x += 1", BinaryOp::Add),
+        ("x -= 1", BinaryOp::Sub),
+        ("x *= 1", BinaryOp::Mul),
+        ("x /= 1", BinaryOp::Div),
+        ("x %= 1", BinaryOp::Rem),
+    ] {
+        let p = program(&format!("fn f() {{ let mut x = 0; {src}; }}"));
+        let Item::Function(f) = &p.items[0] else {
+            panic!("expected a function");
+        };
+        let Stmt::Assign { value, .. } = &f.body.stmts[1] else {
+            panic!("expected an assignment");
+        };
+        let ExprKind::Binary { op, .. } = &value.kind else {
+            panic!("expected a binary expression for {src}");
+        };
+        assert_eq!(*op, want, "for {src}");
+    }
+}
+
+#[test]
 fn integer_overflow_is_reported() {
     assert!(codes("fn main() { let x = 99999999999999999999; }").contains(&"E0110"));
 }

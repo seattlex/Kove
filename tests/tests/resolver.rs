@@ -165,6 +165,12 @@ fn nothing_is_suggested_when_nothing_is_close() {
     );
 }
 
+#[test]
+fn compound_assignment_still_needs_a_mutable_target() {
+    assert_code("fn main() { let x = 1; x += 1; }", "E0204");
+    assert_code("fn main() { missing += 1; }", "E0201");
+}
+
 // --- Lints -----------------------------------------------------------------
 
 #[test]

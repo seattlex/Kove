@@ -281,11 +281,7 @@ impl<'a> Lowerer<'a> {
                     span: sp,
                 })
             }
-            "assignment_statement" => Some(Stmt::Assign {
-                target: self.expr_field(node, "target"),
-                value: self.expr_field(node, "value"),
-                span: sp,
-            }),
+            "assignment_statement" => self.assignment(node, sp),
             "return_statement" => Some(Stmt::Return {
                 value: self.field(node, "value").map(|e| self.expr(&e)),
                 span: sp,
@@ -318,6 +314,58 @@ impl<'a> Lowerer<'a> {
             "expression_statement" => Some(Stmt::Expr(self.expr_field(node, "value"))),
             _ => None, // ERROR islands: already diagnosed by the parser.
         }
+    }
+
+    /// `x = v`, or a compound form desugared into it.
+    ///
+    /// `x += v` becomes `x = x + v`, which is why nothing after this
+    /// stage has a notion of compound assignment. The target is lowered
+    /// twice on purpose: the two copies need distinct node ids, since the
+    /// resolver keys what a reference means by id. Lowering it again is
+    /// safe because a target is a variable or a chain of field reads,
+    /// neither of which can have a side effect.
+    fn assignment(&mut self, node: &SyntaxNode, sp: Span) -> Option<Stmt> {
+        let target = self.expr_field(node, "target");
+        let op_tok = self.field_token(node, "op");
+        let op_text = op_tok.as_ref().map(|t| t.text(self.text)).unwrap_or("=");
+        let op_span = op_tok.as_ref().map(|t| span(t.text_range())).unwrap_or(sp);
+
+        let compound = match op_text {
+            "=" => None,
+            "+=" => Some(BinaryOp::Add),
+            "-=" => Some(BinaryOp::Sub),
+            "*=" => Some(BinaryOp::Mul),
+            "/=" => Some(BinaryOp::Div),
+            "%=" => Some(BinaryOp::Rem),
+            _ => None,
+        };
+
+        let value = match compound {
+            None => self.expr_field(node, "value"),
+            Some(op) => {
+                let lhs = self.expr_field(node, "target");
+                let rhs = self.expr_field(node, "value");
+                // The combined expression spans target through value, so a
+                // type error points at the whole thing rather than half.
+                let value_span = lhs.span.cover(rhs.span);
+                Expr {
+                    id: self.next_id(),
+                    kind: ExprKind::Binary {
+                        op,
+                        lhs: Box::new(lhs),
+                        rhs: Box::new(rhs),
+                        op_span,
+                    },
+                    span: value_span,
+                }
+            }
+        };
+
+        Some(Stmt::Assign {
+            target,
+            value,
+            span: sp,
+        })
     }
 
     fn if_stmt(&mut self, node: &SyntaxNode) -> Option<IfStmt> {
