@@ -11,7 +11,6 @@
 
 const vscode = require("vscode");
 const { execFile } = require("child_process");
-const fs = require("fs");
 const path = require("path");
 
 /** Diagnostics shown in the Problems panel, keyed by file. */
@@ -91,10 +90,14 @@ function checkActiveDocument() {
  *
  * A non-zero exit is not an error here: `kove check` exits 1 when the
  * program has errors, which is exactly the case we want to read.
+ *
+ * `options.stdin` feeds the process source text, which is how the
+ * editor gets the buffer to the compiler rather than whatever was last
+ * written to disk.
  */
 function runKove(args, options = {}) {
   return new Promise((resolve) => {
-    execFile(
+    const child = execFile(
       koveExecutable(),
       args,
       { cwd: options.cwd, maxBuffer: 16 * 1024 * 1024 },
@@ -108,6 +111,12 @@ function runKove(args, options = {}) {
         });
       }
     );
+    if (options.stdin !== undefined && child.stdin) {
+      // The process may reject its arguments and exit before reading, so
+      // a broken pipe here is not something to report.
+      child.stdin.on("error", () => {});
+      child.stdin.end(options.stdin);
+    }
   });
 }
 
@@ -139,10 +148,13 @@ function workingDirectory(doc) {
 }
 
 async function check(doc) {
-  if (doc.isUntitled) return;
-  const result = await runKove(["check", "--json", doc.uri.fsPath], {
-    cwd: workingDirectory(doc),
-  });
+  // The buffer goes to the compiler on stdin, so what you see matches
+  // what you have typed rather than what was last saved. `--name` keeps
+  // the real path on the diagnostics.
+  const result = await runKove(
+    ["check", "--json", `--name=${doc.uri.fsPath}`, "-"],
+    { cwd: workingDirectory(doc), stdin: doc.getText() }
+  );
   if (result.spawnFailed) {
     reportMissingToolchain();
     return;
@@ -192,29 +204,25 @@ function toVscodeDiagnostic(d) {
 }
 
 async function formatDocument(doc) {
-  // `kove fmt` rewrites files in place, so format the saved file and read
-  // it back rather than piping. An unsaved buffer is left alone: the
-  // formatter refuses input that does not parse, and formatting stale
-  // text on disk would be worse than doing nothing.
-  if (doc.isDirty || doc.isUntitled) {
-    vscode.window.setStatusBarMessage("Kove: save the file to format it", 3000);
-    return [];
-  }
+  // Format the buffer through stdin and return edits, which is the
+  // contract VS Code expects: the editor applies them, nothing writes to
+  // disk behind its back, and an unsaved file formats like any other.
   const before = doc.getText();
-  const result = await runKove(["fmt", doc.uri.fsPath], {
+  const result = await runKove(["fmt", `--name=${doc.uri.fsPath}`, "-"], {
     cwd: workingDirectory(doc),
+    stdin: before,
   });
   if (result.spawnFailed) {
     reportMissingToolchain();
     return [];
   }
   if (result.code !== 0) {
-    // The file did not parse; the diagnostics already say why.
-    output.appendLine(result.stderr.trim());
+    // It does not parse; the diagnostics already say why, so there is
+    // nothing useful to add here.
     return [];
   }
 
-  const formatted = fs.readFileSync(doc.uri.fsPath, "utf8");
+  const formatted = result.stdout;
   if (formatted === before) return [];
 
   const whole = new vscode.Range(
