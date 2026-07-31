@@ -110,9 +110,19 @@ pub struct EnumDef {
 #[derive(Debug, Clone)]
 pub struct FuncDef {
     pub name: String,
+    /// The declaration's name, for diagnostics about the function itself.
+    pub span: Span,
     pub params: Vec<ParamDef>,
     /// `None` when the function declares no return type.
     pub ret: Option<TypeRef>,
+}
+
+impl FuncDef {
+    /// Whether execution can start here: `main` for a program, `test_...`
+    /// for `kove test`. Everything else has to be reached by a call.
+    pub fn is_entry_point(&self) -> bool {
+        self.name == "main" || self.name.starts_with("test_")
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -225,6 +235,7 @@ pub fn resolve(program: &Program) -> (Resolutions, Vec<Diagnostic>) {
         }
     }
     r.report_unused();
+    r.report_unreachable_functions();
     r.diags.sort_by_key(|d| (d.span.start, d.span.end));
     (r.out, r.diags)
 }
@@ -238,6 +249,11 @@ struct Resolver {
     /// Bindings something assigned to. Writing is not reading: a variable
     /// that is only ever written is still dead weight.
     assigned: HashSet<LocalId>,
+    /// Who calls whom, for reachability. A function that only calls
+    /// itself is not reached by anything.
+    calls: HashMap<FuncId, HashSet<FuncId>>,
+    /// The function whose body is being resolved.
+    current_fn: Option<FuncId>,
     diags: Vec<Diagnostic>,
 }
 
@@ -302,6 +318,7 @@ impl Resolver {
                     let id = FuncId(self.out.funcs.len());
                     self.out.funcs.push(FuncDef {
                         name: f.name.name.clone(),
+                        span: f.name.span,
                         params: Vec::new(),
                         ret: None,
                     });
@@ -506,6 +523,7 @@ impl Resolver {
         let Some(id) = self.out.func_of_decl(f.name.id) else {
             return; // a duplicate definition; the first one owns the name
         };
+        self.current_fn = Some(id);
         self.scopes.push(HashMap::new());
         // Parameters were given ids during the signature pass; bring those
         // same bindings into scope rather than creating new ones.
@@ -522,6 +540,7 @@ impl Resolver {
         }
         self.resolve_block(&f.body);
         self.scopes.pop();
+        self.current_fn = None;
     }
 
     fn resolve_block(&mut self, block: &Block) {
@@ -723,7 +742,12 @@ impl Resolver {
             return;
         }
         let resolution = match self.out.func_by_name.get(name) {
-            Some(&id) => Resolution::Function(id),
+            Some(&id) => {
+                if let Some(caller) = self.current_fn {
+                    self.calls.entry(caller).or_default().insert(id);
+                }
+                Resolution::Function(id)
+            }
             None => {
                 let mut d = Diagnostic::error(
                     "E0202",
@@ -859,6 +883,60 @@ impl Resolver {
                         "remove it, or rename it to `_{}` if it is deliberate",
                         local.name
                     )),
+            );
+        }
+    }
+}
+
+impl Resolver {
+    /// Warn about functions no execution can reach.
+    ///
+    /// This is reachability from the entry points, not "is it called
+    /// anywhere": a function that only calls itself, or a pair that only
+    /// call each other, is still dead.
+    ///
+    /// A file with no entry point at all is not a program, and there is no
+    /// way to tell what is meant to be used in it, so the lint stays quiet
+    /// rather than flagging everything.
+    fn report_unreachable_functions(&mut self) {
+        let entries: Vec<FuncId> = self
+            .out
+            .funcs
+            .iter()
+            .enumerate()
+            .filter(|(_, f)| f.is_entry_point())
+            .map(|(i, _)| FuncId(i))
+            .collect();
+        if entries.is_empty() {
+            return;
+        }
+
+        let mut reachable: HashSet<FuncId> = HashSet::new();
+        let mut queue = entries;
+        while let Some(id) = queue.pop() {
+            if !reachable.insert(id) {
+                continue;
+            }
+            if let Some(callees) = self.calls.get(&id) {
+                queue.extend(callees.iter().copied());
+            }
+        }
+
+        for (i, func) in self.out.funcs.iter().enumerate() {
+            if reachable.contains(&FuncId(i)) || func.name.starts_with('_') {
+                continue;
+            }
+            self.diags.push(
+                Diagnostic::warning(
+                    "W0002",
+                    format!("`{}` is never called", func.name),
+                    func.span,
+                )
+                .with_label("nothing reaches this function")
+                .with_help(format!(
+                    "remove it, or rename it to `_{}` if it is deliberate",
+                    func.name
+                )),
             );
         }
     }

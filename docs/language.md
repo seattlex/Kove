@@ -76,6 +76,11 @@ return. Loop bodies never count, since they may not run.
 Functions can be declared in any order. Recursion works, including
 mutual recursion.
 
+A function that nothing can reach from `main` or a test is a warning
+(W0002). Reachability is the test, not whether the name appears in a
+call: a function that only calls itself is still dead. A leading `_`
+exempts it, and a file with no entry point at all is left alone.
+
 ## Statements and control flow
 
 ```kov

@@ -79,6 +79,7 @@ unaffected.
 | Code | Meaning |
 | --- | --- |
 | W0001 | A binding (a `let`, a parameter, or a `for` variable) whose value is never read, including one that is only ever assigned to. Prefix the name with `_` to say it is deliberate. |
+| W0002 | A function no execution can reach from `main` or a test. Recursion does not make a function reachable. Quiet in a file that has no entry point at all. Prefix the name with `_` to say it is deliberate. |
 
 ## Runtime errors (E03xx)
 

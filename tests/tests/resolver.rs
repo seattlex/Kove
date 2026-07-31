@@ -246,6 +246,58 @@ fn a_shadowed_binding_that_is_never_read_still_warns() {
     );
 }
 
+#[test]
+fn w0002_unreachable_functions() {
+    use kove_tests::warning_codes;
+
+    assert_eq!(warning_codes("fn dead() { }\nfn main() { }"), vec!["W0002"]);
+    assert!(warning_codes("fn used() { }\nfn main() { used(); }").is_empty());
+    // Reached only through another function still counts.
+    assert!(
+        warning_codes("fn a() { b(); }\nfn b() { }\nfn main() { a(); }").is_empty(),
+        "a chain from main is reachable"
+    );
+    // Tests are entry points too.
+    assert!(warning_codes("fn helper() { }\nfn test_a() { helper(); }").is_empty());
+}
+
+#[test]
+fn w0002_is_reachability_not_just_being_called() {
+    use kove_tests::warning_codes;
+
+    // Calling itself does not make a function reachable.
+    assert_eq!(
+        warning_codes("fn loops() { loops(); }\nfn main() { }"),
+        vec!["W0002"]
+    );
+    // Nor does a mutually recursive pair calling each other.
+    assert_eq!(
+        warning_codes("fn ping() { pong(); }\nfn pong() { ping(); }\nfn main() { }"),
+        vec!["W0002", "W0002"]
+    );
+    // Recursion reached from main is fine.
+    assert!(
+        warning_codes("fn down(n: Int) { if n > 0 { down(n - 1); } }\nfn main() { down(3); }")
+            .is_empty()
+    );
+}
+
+#[test]
+fn w0002_stays_quiet_without_an_entry_point() {
+    use kove_tests::warning_codes;
+
+    // A file with no main and no tests is not a program, so there is no
+    // way to know what is meant to be used.
+    assert!(warning_codes("fn a() { }\nfn b() { }").is_empty());
+}
+
+#[test]
+fn an_underscore_prefix_silences_the_unreachable_lint() {
+    use kove_tests::warning_codes;
+
+    assert!(warning_codes("fn _scaffolding() { }\nfn main() { }").is_empty());
+}
+
 // --- The resolution map ----------------------------------------------------
 
 /// The `Var` expressions in the first function's body, in source order.
