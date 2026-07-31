@@ -4,7 +4,8 @@ Every Kove diagnostic carries a stable code: `E....` for errors and
 `W....` for warnings. Codes are never reused or renumbered, so
 documentation and searches can rely on them.
 
-Each code has a longer explanation than fits on the diagnostic:
+`kove explain --list` prints every code with its summary. Each one has a
+longer explanation than fits on the diagnostic:
 
 ```console
 $ kove explain E0012

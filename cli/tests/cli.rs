@@ -353,3 +353,21 @@ fn explain_prints_a_code_and_rejects_an_unknown_one() {
     // And it needs an argument.
     assert_eq!(kove(&["explain"]).status.code(), Some(2));
 }
+
+#[test]
+fn explain_list_shows_every_code() {
+    let out = kove(&["explain", "--list"]);
+    assert!(out.status.success());
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(text.contains("E0012  mismatched types"), "{text}");
+    assert!(text.contains("W0001"), "{text}");
+    assert!(
+        text.contains("errors:") && text.contains("warnings:"),
+        "{text}"
+    );
+    // The count in the footer matches what the registry holds.
+    assert!(
+        text.contains(&format!("{} codes.", kove_diagnostics::CODES.len())),
+        "{text}"
+    );
+}

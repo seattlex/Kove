@@ -23,6 +23,7 @@ COMMANDS:
     check [file]    Report diagnostics without running
     test [file]     Run every `test_...` function in the program
     explain <code>  Explain a diagnostic code, such as E0012
+                    (--list to show every code)
     fmt [path]...   Format .kov files in place (--check to only report)
     version         Print the toolchain version
     help            Print this message
@@ -410,8 +411,12 @@ fn test(arg: Option<&String>) -> ExitCode {
 fn explain(code: Option<&String>) -> ExitCode {
     let Some(code) = code else {
         eprintln!("error: `kove explain` needs a diagnostic code, like `kove explain E0012`");
+        eprintln!("note: `kove explain --list` shows every code");
         return ExitCode::from(2);
     };
+    if code == "--list" {
+        return list_codes();
+    }
     match kove_diagnostics::explain(code) {
         Some(info) => {
             println!("{}: {}\n", info.code, info.summary);
@@ -429,4 +434,41 @@ fn explain(code: Option<&String>) -> ExitCode {
             ExitCode::from(2)
         }
     }
+}
+
+/// `kove explain --list`
+///
+/// Every code with its summary, so the set is discoverable without
+/// opening the documentation.
+fn list_codes() -> ExitCode {
+    let width = kove_diagnostics::CODES
+        .iter()
+        .map(|c| c.code.len())
+        .max()
+        .unwrap_or(5);
+    let mut errors = Vec::new();
+    let mut warnings = Vec::new();
+    for info in kove_diagnostics::CODES {
+        if info.code.starts_with('W') {
+            warnings.push(info);
+        } else {
+            errors.push(info);
+        }
+    }
+    errors.sort_by_key(|c| c.code);
+    warnings.sort_by_key(|c| c.code);
+
+    println!("errors:");
+    for info in &errors {
+        println!("  {:width$}  {}", info.code, info.summary);
+    }
+    println!("\nwarnings:");
+    for info in &warnings {
+        println!("  {:width$}  {}", info.code, info.summary);
+    }
+    println!(
+        "\n{} codes. `kove explain <code>` for any of them.",
+        errors.len() + warnings.len()
+    );
+    ExitCode::SUCCESS
 }
