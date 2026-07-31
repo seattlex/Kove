@@ -51,7 +51,9 @@ Lives in `compiler/parser` and `compiler/ast`.
 - [x] Name resolution: every reference bound to what it names
 - [x] Lexical scopes, including shadowing and per-block lifetimes
 - [x] Mutability tracked on bindings
-- [x] Diagnostics for unknown and duplicate names
+- [x] Diagnostics for unknown and duplicate names, with suggestions for
+      near misses
+- [x] The unused-binding lint (W0001), the first warning
 
 Lives in `compiler/resolver`.
 
@@ -103,7 +105,8 @@ that can only call `println` is not yet a systems language.
 - [ ] Local and git dependencies (a registry stays a non-goal for now)
 - [x] `kove test`, with an `assert` builtin behind it
 - [x] **Formatter** (`formatter/`): deterministic, opinionated,
-      idempotent, meaning-preserving, enforced in CI
+      idempotent, meaning-preserving, enforced in CI. Wraps lists on
+      width; does not break up long expressions yet
 - [ ] **Language server** (`lsp/`): diagnostics, highlighting, symbols,
       go-to-definition, find references, hover, rename
 

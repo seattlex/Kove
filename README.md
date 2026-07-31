@@ -140,8 +140,22 @@ error[E0012]: mismatched types: expected `Int`, found `String`
 help: remove the quotes or change the variable type
 ```
 
-The full code registry is in [docs/diagnostics.md](docs/diagnostics.md).
-The output format is golden-tested, so it's a contract, not an accident.
+Where the compiler can guess what you meant, it says so:
+
+```text
+error[E0201]: cannot find variable `lenght`
+ --> src/main.kov:3:13
+  |
+3 |     println(lenght);
+  |             ^^^^^^ not found in this scope
+  |
+help: did you mean `length`?
+```
+
+Warnings are separate from errors: they are reported but never fail a
+build. The full code registry is in
+[docs/diagnostics.md](docs/diagnostics.md). The output format is
+golden-tested, so it's a contract, not an accident.
 
 ## Documentation
 
