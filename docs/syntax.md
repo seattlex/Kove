@@ -80,7 +80,7 @@ add           = mul ( ("+" | "-") mul )* ;
 mul           = unary ( ("*" | "/" | "%") unary )* ;
 unary         = ("!" | "-") unary | postfix_expr ;
 postfix_expr  = primary ( call_suffix | field_suffix )* ;
-call_suffix   = "(" ( expression ( "," expression )* )? ")" ;
+call_suffix   = "(" ( expression ( "," expression )* ","? )? ")" ;
 field_suffix  = "." identifier ;
 
 primary       = int | float | string | char | "true" | "false"
@@ -91,8 +91,9 @@ struct_literal= identifier "{" field_init ( "," field_init )* ","? "}" ;
 field_init    = identifier ":" expression ;
 ```
 
-All binary operators associate left. Trailing commas are allowed in
-parameter lists, struct/enum declarations and struct literals.
+All binary operators associate left. A trailing comma is allowed
+wherever a comma separates a list: call arguments, parameter lists,
+struct and enum declarations, and struct literals.
 
 ### The struct-literal / block interaction
 

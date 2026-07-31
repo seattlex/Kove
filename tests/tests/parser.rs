@@ -179,6 +179,26 @@ fn else_if_chains_nest() {
 }
 
 #[test]
+fn a_trailing_comma_is_allowed_in_every_list() {
+    // Consistency: anywhere a comma separates items, a trailing one is
+    // accepted, so a wrapped list can end every line the same way.
+    for src in [
+        "fn f() { g(1, 2,); }",
+        "fn f(a: Int, b: Int,) { }",
+        "struct S { a: Int, b: Int, }",
+        "enum E { A, B, }",
+        "struct S { a: Int }\nfn f() { let s = S { a: 1, }; }",
+    ] {
+        let doc = parse(src);
+        assert!(
+            !doc.tree().has_errors(),
+            "should parse cleanly: {src:?}\n{}",
+            sexpr(src)
+        );
+    }
+}
+
+#[test]
 fn assignment_targets() {
     let tree = sexpr("fn f() { x = 1; user.age = 2; }");
     assert!(tree.contains("(assignment_statement target: 'x'"), "{tree}");

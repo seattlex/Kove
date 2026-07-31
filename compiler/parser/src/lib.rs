@@ -58,6 +58,7 @@ fn build_language() -> Arc<Language> {
             t(k.lparen),
             rep0(field("arg", r(expression)))
                 .sep(t(k.comma))
+                .allow_trailing()
                 .recover(&[k.rparen, k.semi, k.rbrace]),
             t(k.rparen),
         ]),
