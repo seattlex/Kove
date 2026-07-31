@@ -25,7 +25,8 @@ COMMANDS:
     test [file]     Run every `test_...` function in the program
     explain <code>  Explain a diagnostic code, such as E0012
                     (--list to show every code)
-    fmt [path]...   Format .kov files in place (--check to only report)
+    fmt [path]...   Format .kov files in place (--check to only report,
+                    - to format stdin onto stdout)
     version         Print the toolchain version
     help            Print this message
 
@@ -291,13 +292,25 @@ fn run(arg: Option<&String>) -> ExitCode {
 /// wants.
 fn fmt(args: &[String]) -> ExitCode {
     let check_only = args.iter().any(|a| a == "--check");
-    let paths: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
-
+    let mut name: Option<String> = None;
     for arg in args.iter().filter(|a| a.starts_with("--")) {
-        if arg != "--check" {
+        if let Some(value) = arg.strip_prefix("--name=") {
+            name = Some(value.to_string());
+        } else if arg != "--check" {
             eprintln!("error: unknown option `{arg}` for `kove fmt`");
             return ExitCode::from(2);
         }
+    }
+    let paths: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
+
+    // `-` formats stdin onto stdout and touches no files, which is what
+    // an editor wants for a buffer that has not been saved.
+    if paths.iter().any(|p| p.as_str() == "-") {
+        if paths.len() > 1 {
+            eprintln!("error: `-` formats stdin, so it cannot be mixed with paths");
+            return ExitCode::from(2);
+        }
+        return fmt_stdin(name, check_only);
     }
 
     let mut files = Vec::new();
@@ -528,4 +541,39 @@ fn list_codes() -> ExitCode {
         errors.len() + warnings.len()
     );
     ExitCode::SUCCESS
+}
+
+/// `kove fmt -` : format stdin onto stdout.
+///
+/// Nothing is written to disk, so an editor can format a buffer it has
+/// not saved. With `--check` the formatted text is suppressed and the
+/// exit code alone says whether anything would change.
+fn fmt_stdin(name: Option<String>, check_only: bool) -> ExitCode {
+    let mut source = String::new();
+    if let Err(err) = std::io::Read::read_to_string(&mut std::io::stdin(), &mut source) {
+        eprintln!("error: could not read stdin: {err}");
+        return ExitCode::from(2);
+    }
+    let display = name.unwrap_or_else(|| "<stdin>".to_string());
+
+    match kove_formatter::format(&source) {
+        Ok(formatted) => {
+            if check_only {
+                return if formatted == source {
+                    ExitCode::SUCCESS
+                } else {
+                    println!("would reformat {display}");
+                    ExitCode::from(1)
+                };
+            }
+            print!("{formatted}");
+            ExitCode::SUCCESS
+        }
+        Err(diags) => {
+            let file = kove_diagnostics::SourceFile::new(display.clone(), source);
+            eprintln!("{}", render_all(&diags, &file));
+            eprintln!("error: cannot format `{display}` because it does not parse");
+            ExitCode::from(1)
+        }
+    }
 }

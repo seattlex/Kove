@@ -464,3 +464,94 @@ fn check_from_stdin_without_a_name_says_stdin() {
 fn check_takes_at_most_one_file() {
     assert_eq!(kove(&["check", "a.kov", "b.kov"]).status.code(), Some(2));
 }
+
+/// Run kove with something on stdin.
+fn kove_stdin(args: &[&str], input: &str) -> Output {
+    use std::io::Write;
+    let mut child = Command::new(env!("CARGO_BIN_EXE_kove"))
+        .args(args)
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    // A broken pipe here is not a failure: the CLI is allowed to reject
+    // its arguments and exit before it ever reads stdin.
+    let _ = child.stdin.as_mut().unwrap().write_all(input.as_bytes());
+    child.wait_with_output().unwrap()
+}
+
+#[test]
+fn fmt_formats_stdin_onto_stdout() {
+    let out = kove_stdin(&["fmt", "-"], "fn  main( ){let x=1;println( x );}\n");
+    assert!(out.status.success());
+    assert_eq!(
+        String::from_utf8(out.stdout).unwrap(),
+        "fn main() {\n    let x = 1;\n    println(x);\n}\n"
+    );
+}
+
+#[test]
+fn fmt_stdin_writes_no_files() {
+    // Formatting stdin inside a directory of Kove files must leave them
+    // all alone; only stdout carries the result.
+    let dir = std::env::temp_dir().join("kove-fmt-stdin");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("untouched.kov");
+    let messy = "fn  other( ){}\n";
+    std::fs::write(&file, messy).unwrap();
+
+    use std::io::Write;
+    let mut child = Command::new(env!("CARGO_BIN_EXE_kove"))
+        .args(["fmt", "-"])
+        .current_dir(&dir)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(b"fn  f( ){}\n")
+        .unwrap();
+    let out = child.wait_with_output().unwrap();
+
+    assert!(out.status.success());
+    assert_eq!(String::from_utf8(out.stdout).unwrap(), "fn f() {}\n");
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), messy);
+}
+
+#[test]
+fn fmt_stdin_refuses_input_that_does_not_parse() {
+    let out = kove_stdin(
+        &["fmt", "-", "--name=buffer.kov"],
+        "fn main() { let x = 1 }\n",
+    );
+    assert_eq!(out.status.code(), Some(1));
+    // Nothing half-formatted reaches stdout.
+    assert!(String::from_utf8(out.stdout).unwrap().is_empty());
+    let stderr = String::from_utf8(out.stderr).unwrap();
+    assert!(stderr.contains("buffer.kov"), "{stderr}");
+    assert!(stderr.contains("does not parse"), "{stderr}");
+}
+
+#[test]
+fn fmt_stdin_with_check_only_reports() {
+    let out = kove_stdin(&["fmt", "--check", "-"], "fn  main( ){}\n");
+    assert_eq!(out.status.code(), Some(1));
+    assert!(String::from_utf8(out.stdout)
+        .unwrap()
+        .contains("would reformat"));
+
+    let out = kove_stdin(&["fmt", "--check", "-"], "fn main() {}\n");
+    assert!(out.status.success());
+}
+
+#[test]
+fn fmt_stdin_cannot_be_mixed_with_paths() {
+    let out = kove_stdin(&["fmt", "-", "some.kov"], "fn main() {}\n");
+    assert_eq!(out.status.code(), Some(2));
+}
