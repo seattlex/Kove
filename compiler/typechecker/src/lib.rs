@@ -549,6 +549,37 @@ impl<'r> Checker<'r> {
                 }
                 Ty::Unit
             }
+            Resolution::Builtin(builtin @ (Builtin::ToFloat | Builtin::ToInt)) => {
+                let (from, to) = match builtin {
+                    Builtin::ToFloat => (Ty::Int, Ty::Float),
+                    _ => (Ty::Float, Ty::Int),
+                };
+                self.check_builtin_arity(call, args, builtin, 1);
+                for a in args {
+                    let ty = self.check_expr(a);
+                    if !compat(ty, from) {
+                        self.diags.push(
+                            Diagnostic::error(
+                                "E0012",
+                                format!(
+                                    "mismatched types: expected `{}`, found `{}`",
+                                    self.ty_name(from),
+                                    self.ty_name(ty)
+                                ),
+                                a.span,
+                            )
+                            .with_label(format!("expected `{}`", self.ty_name(from)))
+                            .with_note(format!(
+                                "`{}` converts `{}` to `{}`",
+                                builtin.name(),
+                                self.ty_name(from),
+                                self.ty_name(to)
+                            )),
+                        );
+                    }
+                }
+                to
+            }
             Resolution::Builtin(Builtin::Println) => {
                 self.check_builtin_arity(call, args, Builtin::Println, 1);
                 for a in args {

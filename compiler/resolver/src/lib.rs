@@ -76,15 +76,24 @@ pub enum Resolution {
 pub enum Builtin {
     Println,
     Assert,
+    ToFloat,
+    ToInt,
 }
 
 impl Builtin {
-    pub const ALL: [Builtin; 2] = [Builtin::Println, Builtin::Assert];
+    pub const ALL: [Builtin; 4] = [
+        Builtin::Println,
+        Builtin::Assert,
+        Builtin::ToFloat,
+        Builtin::ToInt,
+    ];
 
     pub fn name(self) -> &'static str {
         match self {
             Builtin::Println => "println",
             Builtin::Assert => "assert",
+            Builtin::ToFloat => "to_float",
+            Builtin::ToInt => "to_int",
         }
     }
 

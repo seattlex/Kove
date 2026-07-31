@@ -145,6 +145,7 @@ Reported by the interpreter with the span of the failing operation.
 | E0304 | Recursion limit (1000 nested calls) exceeded. |
 | E0305 | Writing program output failed. |
 | E0306 | An `assert` condition was false. |
+| E0307 | `to_int` was given a Float that no Int can stand for: not a number, infinite, or out of range. |
 
 `Float` follows IEEE 754 and doesn't raise E03xx errors.
 

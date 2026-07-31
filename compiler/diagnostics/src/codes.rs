@@ -432,6 +432,20 @@ The limit exists so runaway recursion produces a diagnostic pointing at
 the call rather than crashing the process.",
     },
     CodeInfo {
+        code: "E0307",
+        summary: "cannot convert this Float to Int",
+        explanation: "\
+`to_int` was given a Float with no Int that could stand for it.
+
+That means one of three things: the value is not a number, it is
+infinite, or truncating it would land outside the range an Int can hold.
+Kove reports this rather than saturating at the boundary or producing an
+arbitrary number, for the same reason Int arithmetic traps on overflow.
+
+Conversion truncates toward zero, so `to_int(2.9)` is 2 and
+`to_int(-2.9)` is -2.",
+    },
+    CodeInfo {
         code: "E0305",
         summary: "failed to write output",
         explanation: "\

@@ -167,6 +167,36 @@ fn compound_assignment_is_checked_like_any_arithmetic() {
 }
 
 #[test]
+fn conversions_run() {
+    assert_eq!(
+        run("fn main() { println(to_float(3)); println(to_float(0 - 3)); }"),
+        "3\n-3\n"
+    );
+    // Truncation is toward zero, in both directions.
+    assert_eq!(
+        run("fn main() { println(to_int(2.9)); println(to_int(0.0 - 2.9)); }"),
+        "2\n-2\n"
+    );
+    // An Int mean of Ints, done properly.
+    assert_eq!(
+        run("fn main() { println(to_float(7) / to_float(2)); }"),
+        "3.5\n"
+    );
+}
+
+#[test]
+fn e0307_float_that_no_int_can_stand_for() {
+    for src in [
+        "fn main() { println(to_int(1.0 / 0.0)); }",
+        "fn main() { println(to_int(0.0 - 1.0 / 0.0)); }",
+        "fn main() { println(to_int(0.0 / 0.0)); }",
+        "fn main() { println(to_int(100000000000000000000.0)); }",
+    ] {
+        assert_eq!(run_expecting_runtime_error(src), "E0307", "for {src}");
+    }
+}
+
+#[test]
 fn e0306_failed_assertion() {
     assert_eq!(
         run_expecting_runtime_error("fn main() { assert(1 == 2); }"),

@@ -111,6 +111,14 @@ fn e0230_callee_must_be_a_name() {
 fn builtin_names_are_reserved() {
     assert_code("fn println(x: Int) { }\nfn main() { }", "E0205");
     assert_code("fn assert(c: Bool) { }\nfn main() { }", "E0205");
+    assert_code(
+        "fn to_float(n: Int) -> Float { return 1.0; }\nfn main() { }",
+        "E0205",
+    );
+    assert_code(
+        "fn to_int(f: Float) -> Int { return 1; }\nfn main() { }",
+        "E0205",
+    );
 }
 
 // --- Suggestions -----------------------------------------------------------

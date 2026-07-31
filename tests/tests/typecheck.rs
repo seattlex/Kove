@@ -146,6 +146,19 @@ fn compound_assignment_type_checks_like_the_long_form() {
 }
 
 #[test]
+fn conversions_between_int_and_float() {
+    assert_ok("fn main() { let x: Float = to_float(3); println(x); }");
+    assert_ok("fn main() { let n: Int = to_int(3.7); println(n); }");
+    // Each one takes the type it converts from, not the one it returns.
+    assert_code("fn main() { let x = to_float(1.5); }", "E0012");
+    assert_code("fn main() { let n = to_int(3); }", "E0012");
+    assert_code("fn main() { let x = to_float(); }", "E0203");
+    assert_code("fn main() { let x = to_float(1, 2); }", "E0203");
+    // The conversion is what lets the two types meet at all.
+    assert_ok("fn main() { let total = 7; let avg = to_float(total) / 2.0; println(avg); }");
+}
+
+#[test]
 fn e0215_unprintable_value() {
     assert_code(
         "struct P { x: Int }\nfn main() { println(P { x: 1 }); }",

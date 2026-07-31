@@ -361,6 +361,43 @@ impl<'p, 'o> Interp<'p, 'o> {
                     })?;
                     return Ok(Value::Unit);
                 }
+                if name == "to_float" {
+                    let Some(Value::Int(v)) = values.into_iter().next() else {
+                        ice("to_float was given something other than an Int")
+                    };
+                    // Beyond 2^53 this rounds; that is what the hardware
+                    // does and what every language with both types does.
+                    return Ok(Value::Float(v as f64));
+                }
+                if name == "to_int" {
+                    let Some(Value::Float(v)) = values.into_iter().next() else {
+                        ice("to_int was given something other than a Float")
+                    };
+                    let span = args.first().map(|a| a.span).unwrap_or(e.span);
+                    if v.is_nan() {
+                        return Err(RuntimeError::new(
+                            "E0307",
+                            "cannot convert this Float to Int: it is not a number",
+                            span,
+                        ));
+                    }
+                    // Truncation is toward zero, so the check is against
+                    // the range a truncated value could land in.
+                    let truncated = v.trunc();
+                    if truncated < i64::MIN as f64 || truncated > i64::MAX as f64 {
+                        return Err(RuntimeError::new(
+                            "E0307",
+                            format!("cannot convert `{}` to Int: it is out of range", v),
+                            span,
+                        )
+                        .with_note(format!(
+                            "`Int` values range from {} to {}",
+                            i64::MIN,
+                            i64::MAX
+                        )));
+                    }
+                    return Ok(Value::Int(truncated as i64));
+                }
                 if name == "assert" {
                     let Some(Value::Bool(ok)) = values.into_iter().next() else {
                         ice("assert was given something other than a Bool")
