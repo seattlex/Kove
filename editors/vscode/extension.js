@@ -15,8 +15,16 @@ const path = require("path");
 
 /** Diagnostics shown in the Problems panel, keyed by file. */
 let diagnostics;
-/** Pending debounce timer for check-on-type. */
-let pending;
+/** Debounce timer per document, keyed by URI string. */
+const pending = new Map();
+/**
+ * The most recent check started per document, keyed by URI string.
+ * Checks run in a child process and can finish out of order, so a result
+ * is only published if it is still the newest one asked for. Without
+ * this, typing quickly leaves whichever check happened to be slowest on
+ * screen.
+ */
+const generation = new Map();
 /** Output channel for anything the user should be able to read afterwards. */
 let output;
 
@@ -52,20 +60,35 @@ function activate(context) {
     vscode.workspace.onDidChangeTextDocument((event) => {
       if (!config().get("checkOnType", true)) return;
       if (event.document.languageId !== "kove") return;
-      clearTimeout(pending);
-      pending = setTimeout(
-        () => check(event.document),
-        config().get("checkDelay", 400)
+      // One timer per document. A single shared timer meant that editing
+      // a second file cancelled the first file's pending check, and it
+      // never ran.
+      const key = event.document.uri.toString();
+      clearTimeout(pending.get(key));
+      pending.set(
+        key,
+        setTimeout(() => {
+          pending.delete(key);
+          check(event.document);
+        }, config().get("checkDelay", 400))
       );
     }),
-    vscode.workspace.onDidCloseTextDocument((doc) => diagnostics.delete(doc.uri))
+    vscode.workspace.onDidCloseTextDocument((doc) => {
+      const key = doc.uri.toString();
+      clearTimeout(pending.get(key));
+      pending.delete(key);
+      generation.delete(key);
+      diagnostics.delete(doc.uri);
+    })
   );
 
   vscode.workspace.textDocuments.forEach(checkIfKove);
 }
 
 function deactivate() {
-  clearTimeout(pending);
+  for (const timer of pending.values()) clearTimeout(timer);
+  pending.clear();
+  generation.clear();
 }
 
 function config() {
@@ -148,6 +171,11 @@ function workingDirectory(doc) {
 }
 
 async function check(doc) {
+  const key = doc.uri.toString();
+  const mine = (generation.get(key) || 0) + 1;
+  generation.set(key, mine);
+  const current = () => generation.get(key) === mine;
+
   // The buffer goes to the compiler on stdin, so what you see matches
   // what you have typed rather than what was last saved. `--name` keeps
   // the real path on the diagnostics.
@@ -159,6 +187,9 @@ async function check(doc) {
     reportMissingToolchain();
     return;
   }
+  // A newer check overtook this one, so its answer is about text that is
+  // no longer on screen.
+  if (!current()) return;
 
   let report;
   try {
