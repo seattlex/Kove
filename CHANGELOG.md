@@ -62,6 +62,8 @@ the start of v0.7 tooling.
 - `kove.toml` manifests, parsed strictly with line-numbered errors
 - `kove test` runs every `test_...` function and reports failures with
   the failing assertion's source snippet
+- `kove explain <code>` prints the long form of a diagnostic code, with
+  tests keeping the registry and docs/diagnostics.md in step
 - `kove fmt` formats in place and `kove fmt --check` reports without
   writing: opinionated, no options, idempotent, and never changes the
   token stream. Refuses files that do not parse. Enforced in CI over the

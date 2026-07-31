@@ -97,7 +97,7 @@ version = "0.1.0"
 ```
 
 Commands: `kove new`, `kove build`, `kove run`, `kove check`,
-`kove test`, `kove fmt`, `kove version`. Without a file argument, kove
+`kove test`, `kove fmt`, `kove explain`, `kove version`. Without a file argument, kove
 uses the current project's `src/main.kov`. Exit codes are stable for CI:
 `0` success, `1` the program has errors, `2` the CLI was misused.
 
@@ -150,6 +150,16 @@ error[E0201]: cannot find variable `lenght`
   |             ^^^^^^ not found in this scope
   |
 help: did you mean `length`?
+```
+
+Every code has a longer explanation behind it:
+
+```console
+$ kove explain E0012
+E0012: mismatched types
+
+An expression has one type where another was required.
+...
 ```
 
 Warnings are separate from errors: they are reported but never fail a

@@ -118,6 +118,7 @@ tests/tests/resolver.rs      name diagnostics + the resolution map itself
 tests/tests/typecheck.rs     one test per type error code + clean programs
 tests/tests/diagnostics.rs   golden rendered output (the format is a contract)
 tests/tests/compiler.rs      driver policy + runtime error codes
+tests/tests/codes.rs         the code registry against docs/diagnostics.md
 tests/tests/integration.rs   fixture programs in tests/programs/
 cli/tests/cli.rs             the binary: commands, exit codes, stdio,
                              projects, formatting

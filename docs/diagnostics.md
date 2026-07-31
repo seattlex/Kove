@@ -2,7 +2,21 @@
 
 Every Kove diagnostic carries a stable code: `E....` for errors and
 `W....` for warnings. Codes are never reused or renumbered, so
-documentation and searches can rely on them. The
+documentation and searches can rely on them.
+
+Each code has a longer explanation than fits on the diagnostic:
+
+```console
+$ kove explain E0012
+E0012: mismatched types
+
+An expression has one type where another was required.
+...
+```
+
+The explanations live in `compiler/diagnostics/src/codes.rs`, and tests
+check them against the tables below in both directions, so this page and
+the compiler cannot drift apart. The
 rendering format is part of the compiler's contract and golden-tested:
 
 ```text
@@ -98,7 +112,12 @@ Reported by the interpreter with the span of the failing operation.
 
 ## Adding a code
 
-Pick the next free number in the right band, register it in this table
-in the same change that introduces it, and add a test in
-`tests/tests/typecheck.rs` (or the matching suite) that asserts the
-code. Codes in documentation must always match the compiler.
+Pick the next free number in the right band, then in the same change:
+
+1. Add it to the table above.
+2. Add a `CodeInfo` entry in `compiler/diagnostics/src/codes.rs` with a
+   summary and an explanation.
+3. Add a test in the suite for the stage that emits it.
+
+The registry tests fail if steps 1 and 2 disagree, so the documentation
+and the compiler cannot drift.
