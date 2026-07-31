@@ -99,6 +99,20 @@ impl Diagnostic {
         self.notes.push(note.into());
         self
     }
+
+    pub fn is_error(&self) -> bool {
+        self.severity == Severity::Error
+    }
+
+    pub fn is_warning(&self) -> bool {
+        self.severity == Severity::Warning
+    }
+}
+
+/// True if any diagnostic is an error. Warnings never stop a build, and
+/// never stop a later compiler stage from running either.
+pub fn has_errors(diagnostics: &[Diagnostic]) -> bool {
+    diagnostics.iter().any(Diagnostic::is_error)
 }
 
 /// A named source file with a precomputed line index.

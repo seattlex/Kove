@@ -12,9 +12,10 @@
 //!                  output
 //! ```
 //!
-//! Type checking only runs when the syntax phase produced no errors, since
-//! a broken parse would drown the user in follow-on errors. Within a phase,
-//! every error found is reported.
+//! The semantic stages only run when the syntax phase produced no
+//! errors, since a broken parse would drown the user in follow-on errors.
+//! Within a phase, every error found is reported. Warnings never block a
+//! stage and never fail a build.
 
 use kove_ast::Program;
 use kove_diagnostics::{Diagnostic, SourceFile};
@@ -27,8 +28,17 @@ pub struct Compilation {
 }
 
 impl Compilation {
+    /// True if anything blocks compilation. Warnings do not.
     pub fn has_errors(&self) -> bool {
-        !self.diagnostics.is_empty()
+        kove_diagnostics::has_errors(&self.diagnostics)
+    }
+
+    pub fn error_count(&self) -> usize {
+        self.diagnostics.iter().filter(|d| d.is_error()).count()
+    }
+
+    pub fn warning_count(&self) -> usize {
+        self.diagnostics.iter().filter(|d| d.is_warning()).count()
     }
 }
 
@@ -39,7 +49,9 @@ pub fn compile(name: &str, text: &str) -> Compilation {
     let mut diagnostics = kove_parser::syntax_diagnostics(&doc);
     let lowered = kove_ast::lower(&doc);
     diagnostics.extend(lowered.diagnostics);
-    if diagnostics.is_empty() {
+    // Warnings do not stop the later stages; only errors do, because
+    // semantic errors on top of a broken parse are noise.
+    if !kove_diagnostics::has_errors(&diagnostics) {
         // Names first, then types. The type checker consumes the
         // resolver's output and never looks a name up itself.
         let (resolutions, resolve_diags) = kove_resolver::resolve(&lowered.program);

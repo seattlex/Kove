@@ -137,20 +137,48 @@ fn load(arg: Option<&String>) -> Result<(String, String), ExitCode> {
 }
 
 /// Print diagnostics and the closing summary line. Returns the failure
-/// exit code when there were errors.
+/// exit code when there were errors; warnings are printed but do not stop
+/// anything.
 fn report(c: &Compilation) -> Option<ExitCode> {
-    if !c.has_errors() {
+    if c.diagnostics.is_empty() {
         return None;
     }
     eprintln!("{}", render_all(&c.diagnostics, &c.source));
-    let n = c.diagnostics.len();
+
+    let errors = c.error_count();
+    let warnings = c.warning_count();
+    if errors == 0 {
+        eprintln!(
+            "warning: `{}` generated {} warning{}",
+            c.source.name,
+            warnings,
+            plural(warnings)
+        );
+        return None;
+    }
+    if warnings > 0 {
+        eprintln!(
+            "warning: `{}` generated {} warning{}",
+            c.source.name,
+            warnings,
+            plural(warnings)
+        );
+    }
     eprintln!(
         "error: could not compile `{}` due to {} previous error{}",
         c.source.name,
-        n,
-        if n == 1 { "" } else { "s" }
+        errors,
+        plural(errors)
     );
     Some(ExitCode::from(1))
+}
+
+fn plural(n: usize) -> &'static str {
+    if n == 1 {
+        ""
+    } else {
+        "s"
+    }
 }
 
 fn build_or_check(arg: Option<&String>, mode: Mode) -> ExitCode {
