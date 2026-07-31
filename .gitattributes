@@ -1,0 +1,11 @@
+# Normalize line endings on checkin.
+* text=auto
+
+# Kove sources and the golden output files the integration tests compare
+# against byte for byte. Without eol=lf a CRLF checkout would make every
+# fixture comparison fail on Windows.
+*.kov text eol=lf
+*.stdout text eol=lf
+*.rs text eol=lf
+*.toml text eol=lf
+*.md text eol=lf
