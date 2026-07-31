@@ -20,7 +20,7 @@ COMMANDS:
     new <name>      Create a new project (kove.toml + src/main.kov)
     build [file]    Check the program the way `run` would (no native backend yet)
     run [file]      Compile and execute the program
-    check [file]    Report diagnostics without running
+    check [file]    Report diagnostics without running (--json for tools)
     test [file]     Run every `test_...` function in the program
     explain <code>  Explain a diagnostic code, such as E0012
                     (--list to show every code)
@@ -40,7 +40,7 @@ fn main() -> ExitCode {
         Some("new") => new_project(args.get(1)),
         Some("build") => build_or_check(args.get(1), Mode::Build),
         Some("run") => run(args.get(1)),
-        Some("check") => build_or_check(args.get(1), Mode::Check),
+        Some("check") => check(&args[1..]),
         Some("test") => test(args.get(1)),
         Some("explain") => explain(args.get(1)),
         Some("fmt") => fmt(&args[1..]),
@@ -67,6 +67,40 @@ fn main() -> ExitCode {
 enum Mode {
     Build,
     Check,
+}
+
+/// `kove check [--json] [file]`
+///
+/// With `--json` the diagnostics go to stdout in the machine-readable
+/// shape documented in `docs/diagnostics.md`, which is what the editor
+/// integration reads. Exit codes are the same either way.
+fn check(args: &[String]) -> ExitCode {
+    let json = args.iter().any(|a| a == "--json");
+    for arg in args.iter().filter(|a| a.starts_with("--")) {
+        if arg != "--json" {
+            eprintln!("error: unknown option `{arg}` for `kove check`");
+            return ExitCode::from(2);
+        }
+    }
+    let file = args.iter().find(|a| !a.starts_with("--"));
+    if !json {
+        return build_or_check(file, Mode::Check);
+    }
+
+    let (path, text) = match load(file) {
+        Ok(v) => v,
+        Err(code) => return code,
+    };
+    let c = kove_cli::compile(&path, &text);
+    print!(
+        "{}",
+        kove_diagnostics::json::render_json(&c.diagnostics, &c.source)
+    );
+    if c.has_errors() {
+        ExitCode::from(1)
+    } else {
+        ExitCode::SUCCESS
+    }
 }
 
 fn new_project(name: Option<&String>) -> ExitCode {

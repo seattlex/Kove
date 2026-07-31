@@ -371,3 +371,44 @@ fn explain_list_shows_every_code() {
         "{text}"
     );
 }
+
+#[test]
+fn check_json_emits_parseable_diagnostics() {
+    let dir = std::env::temp_dir().join("kove-json-test");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("bad.kov");
+    std::fs::write(
+        &file,
+        "fn main() {\n    let age: Int = \"sixteen\";\n    println(age);\n}\n",
+    )
+    .unwrap();
+
+    let out = kove(&["check", "--json", file.to_str().unwrap()]);
+    assert_eq!(out.status.code(), Some(1));
+    let text = String::from_utf8(out.stdout).unwrap();
+
+    // Shape the editor integration depends on.
+    assert!(text.contains("\"diagnostics\": ["), "{text}");
+    assert!(text.contains("\"severity\": \"error\""), "{text}");
+    assert!(text.contains("\"code\": \"E0012\""), "{text}");
+    assert!(text.contains("\"line\": 2"), "{text}");
+    assert!(text.contains("\"column\": 20"), "{text}");
+    assert!(text.contains("\"help\": "), "{text}");
+    // Nothing human-formatted leaks into stdout.
+    assert!(!text.contains("-->"), "{text}");
+    assert!(!text.contains('^'), "{text}");
+}
+
+#[test]
+fn check_json_on_a_clean_file_is_an_empty_list() {
+    let out = kove(&["check", "--json", &example("hello.kov")]);
+    assert!(out.status.success());
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(text.contains("\"diagnostics\": []"), "{text}");
+}
+
+#[test]
+fn check_rejects_unknown_options() {
+    assert_eq!(kove(&["check", "--nope"]).status.code(), Some(2));
+}

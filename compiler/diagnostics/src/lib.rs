@@ -6,6 +6,7 @@
 //! free-form notes. The full code registry lives in `docs/diagnostics.md`.
 
 pub mod codes;
+pub mod json;
 
 pub use codes::{explain, CodeInfo, CODES};
 

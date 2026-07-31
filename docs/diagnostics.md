@@ -4,6 +4,37 @@ Every Kove diagnostic carries a stable code: `E....` for errors and
 `W....` for warnings. Codes are never reused or renumbered, so
 documentation and searches can rely on them.
 
+## Machine-readable output
+
+`kove check --json` prints diagnostics as JSON on stdout instead of the
+human layout, which is what the editor integration reads. Positions come
+both ways: 1-based line and column for quoting, and byte offsets for
+indexing. `label` and `help` are `null` when absent rather than omitted,
+so consumers can read the same keys every time.
+
+```json
+{
+  "file": "src/main.kov",
+  "diagnostics": [
+    {
+      "severity": "error",
+      "code": "E0012",
+      "message": "mismatched types: expected `Int`, found `String`",
+      "start": { "line": 2, "column": 20, "offset": 31 },
+      "end": { "line": 2, "column": 29, "offset": 40 },
+      "label": "expected `Int`",
+      "help": "remove the quotes or change the variable type",
+      "notes": []
+    }
+  ]
+}
+```
+
+Exit codes are unchanged: 1 if there are errors, 0 otherwise. Warnings
+appear in the list without affecting the exit code.
+
+## Explaining a code
+
 `kove explain --list` prints every code with its summary. Each one has a
 longer explanation than fits on the diagnostic:
 
