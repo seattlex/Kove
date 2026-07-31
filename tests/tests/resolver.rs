@@ -218,6 +218,24 @@ fn warnings_do_not_stop_compilation() {
 }
 
 #[test]
+fn w0001_catches_a_variable_that_is_only_written() {
+    use kove_tests::warning_codes;
+
+    // Writing is not reading.
+    assert_eq!(
+        warning_codes("fn main() { let mut x = 0; x = 1; }"),
+        vec!["W0001"]
+    );
+    // ...but a later read clears it.
+    assert!(warning_codes("fn main() { let mut x = 0; x = 1; println(x); }").is_empty());
+    // Assigning through a field reads the root, so it counts as a use.
+    assert!(
+        warning_codes("struct B { v: Int }\nfn main() { let mut b = B { v: 1 }; b.v = 2; }")
+            .is_empty()
+    );
+}
+
+#[test]
 fn a_shadowed_binding_that_is_never_read_still_warns() {
     use kove_tests::warning_codes;
 

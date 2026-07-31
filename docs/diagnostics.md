@@ -78,7 +78,7 @@ unaffected.
 
 | Code | Meaning |
 | --- | --- |
-| W0001 | A binding (a `let`, a parameter, or a `for` variable) that nothing ever refers to. Prefix the name with `_` to say it is deliberate. |
+| W0001 | A binding (a `let`, a parameter, or a `for` variable) whose value is never read, including one that is only ever assigned to. Prefix the name with `_` to say it is deliberate. |
 
 ## Runtime errors (E03xx)
 

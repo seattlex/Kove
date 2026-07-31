@@ -233,8 +233,11 @@ pub fn resolve(program: &Program) -> (Resolutions, Vec<Diagnostic>) {
 struct Resolver {
     out: Resolutions,
     scopes: Vec<HashMap<String, LocalId>>,
-    /// Bindings that something actually referred to.
-    used: HashSet<LocalId>,
+    /// Bindings something read the value of.
+    read: HashSet<LocalId>,
+    /// Bindings something assigned to. Writing is not reading: a variable
+    /// that is only ever written is still dead weight.
+    assigned: HashSet<LocalId>,
     diags: Vec<Diagnostic>,
 }
 
@@ -590,7 +593,10 @@ impl Resolver {
     /// The target's names are resolved exactly once, so an unknown name
     /// here reports E0201 and not also E0204.
     fn resolve_assign_target(&mut self, target: &Expr) {
-        self.resolve_expr(target);
+        match &target.kind {
+            ExprKind::Var(name) => self.resolve_var(target, name, false),
+            _ => self.resolve_expr(target),
+        }
         let Some(root) = root_var(target) else {
             self.diags.push(
                 Diagnostic::error("E0213", "invalid assignment target", target.span)
@@ -603,6 +609,7 @@ impl Resolver {
             return;
         };
         if let Resolution::Local(local) = self.out.resolution(root.id) {
+            self.assigned.insert(local);
             let def = &self.out.locals[local.0 as usize];
             if !def.mutable {
                 let name = def.name.clone();
@@ -630,38 +637,7 @@ impl Resolver {
             | ExprKind::Char(_)
             | ExprKind::Str(_)
             | ExprKind::Error => {}
-            ExprKind::Var(name) => {
-                let resolution = match self.lookup(name) {
-                    Some(local) => {
-                        self.used.insert(local);
-                        Resolution::Local(local)
-                    }
-                    None => {
-                        let mut d = Diagnostic::error(
-                            "E0201",
-                            format!("cannot find variable `{}`", name),
-                            e.span,
-                        )
-                        .with_label("not found in this scope");
-                        if let Some(similar) = suggest::closest(name, self.visible_locals()) {
-                            d = d.with_help(format!("did you mean `{}`?", similar));
-                        } else if self.out.func_by_name.contains_key(name) {
-                            d = d.with_help(format!(
-                                "`{}` is a function; did you mean to call it: `{}(...)`?",
-                                name, name
-                            ));
-                        } else if self.out.enum_by_name.contains_key(name) {
-                            d = d.with_help(format!(
-                                "`{}` is an enum; name one of its variants: `{}::...`",
-                                name, name
-                            ));
-                        }
-                        self.diags.push(d);
-                        Resolution::Error
-                    }
-                };
-                self.out.refs.insert(e.id, resolution);
-            }
+            ExprKind::Var(name) => self.resolve_var(e, name, true),
             ExprKind::Unary { operand, .. } => self.resolve_expr(operand),
             ExprKind::Binary { lhs, rhs, .. } => {
                 self.resolve_expr(lhs);
@@ -689,6 +665,41 @@ impl Resolver {
                 self.out.refs.insert(e.id, resolution);
             }
         }
+    }
+
+    /// Resolve a variable reference. `reading` is false for the bare
+    /// target of an assignment (`x = 1`), which binds the name without
+    /// reading it. A field chain (`user.age = 1`) does read its root.
+    fn resolve_var(&mut self, e: &Expr, name: &str, reading: bool) {
+        let resolution = match self.lookup(name) {
+            Some(local) => {
+                if reading {
+                    self.read.insert(local);
+                }
+                Resolution::Local(local)
+            }
+            None => {
+                let mut d =
+                    Diagnostic::error("E0201", format!("cannot find variable `{}`", name), e.span)
+                        .with_label("not found in this scope");
+                if let Some(similar) = suggest::closest(name, self.visible_locals()) {
+                    d = d.with_help(format!("did you mean `{}`?", similar));
+                } else if self.out.func_by_name.contains_key(name) {
+                    d = d.with_help(format!(
+                        "`{}` is a function; did you mean to call it: `{}(...)`?",
+                        name, name
+                    ));
+                } else if self.out.enum_by_name.contains_key(name) {
+                    d = d.with_help(format!(
+                        "`{}` is an enum; name one of its variants: `{}::...`",
+                        name, name
+                    ));
+                }
+                self.diags.push(d);
+                Resolution::Error
+            }
+        };
+        self.out.refs.insert(e.id, resolution);
     }
 
     fn resolve_callee(&mut self, callee: &Expr) {
@@ -826,20 +837,28 @@ impl Resolver {
     /// its value.
     fn report_unused(&mut self) {
         for (i, local) in self.out.locals.iter().enumerate() {
-            if local.name.starts_with('_') || self.used.contains(&LocalId(i as u32)) {
+            let id = LocalId(i as u32);
+            if local.name.starts_with('_') || self.read.contains(&id) {
                 continue;
             }
-            self.diags.push(
-                Diagnostic::warning(
-                    "W0001",
-                    format!("`{}` is never used", local.name),
-                    local.span,
+            let (message, label) = if self.assigned.contains(&id) {
+                (
+                    format!("`{}` is assigned but never read", local.name),
+                    "the value written here is never used",
                 )
-                .with_label("declared here and never referred to")
-                .with_help(format!(
-                    "remove it, or rename it to `_{}` if it is deliberate",
-                    local.name
-                )),
+            } else {
+                (
+                    format!("`{}` is never used", local.name),
+                    "declared here and never referred to",
+                )
+            };
+            self.diags.push(
+                Diagnostic::warning("W0001", message, local.span)
+                    .with_label(label)
+                    .with_help(format!(
+                        "remove it, or rename it to `_{}` if it is deliberate",
+                        local.name
+                    )),
             );
         }
     }

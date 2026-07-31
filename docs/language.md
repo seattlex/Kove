@@ -33,9 +33,10 @@ Shadowing is allowed: a new `let` with the same name creates a new
 variable, and inner scopes hide outer ones. A variable exists from its
 `let` to the end of the enclosing block.
 
-A binding nothing ever reads is a warning (W0001), not an error. A name
-starting with `_` is exempt, which is how you say the binding exists on
-purpose:
+A binding whose value is never read is a warning (W0001), not an error.
+Writing to a variable does not count as reading it, so a variable that is
+only ever assigned still warns. A name starting with `_` is exempt, which
+is how you say the binding exists on purpose:
 
 ```kov
 let _unused = compute();
