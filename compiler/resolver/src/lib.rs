@@ -717,6 +717,13 @@ impl Resolver {
                         "`{}` is a function; did you mean to call it: `{}(...)`?",
                         name, name
                     ));
+                } else if Builtin::from_name(name).is_some() {
+                    // Functions are not values in Kove, so a builtin used
+                    // as one really is unresolvable. Saying only "not
+                    // found" would be misleading, since the name exists.
+                    d = d
+                        .with_label("built-in functions can only be called")
+                        .with_help(format!("did you mean to call it: `{}(...)`?", name));
                 } else if self.out.enum_by_name.contains_key(name) {
                     d = d.with_help(format!(
                         "`{}` is an enum; name one of its variants: `{}::...`",

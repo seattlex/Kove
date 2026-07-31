@@ -2,7 +2,7 @@
 //! programs that must check cleanly. Diagnostics about *names* belong to
 //! the resolver and are tested in `resolver.rs`.
 
-use kove_tests::codes;
+use kove_tests::{codes, diagnostics};
 
 #[track_caller]
 fn assert_ok(src: &str) {
@@ -180,6 +180,24 @@ fn a_wrong_argument_count_is_the_only_error_reported() {
         // E0203 first: it is reported on the whole call, which starts
         // before the argument E0212 points at.
         ["E0203", "E0212"]
+    );
+}
+
+#[test]
+fn a_builtin_used_as_a_value_says_why() {
+    // `to_float` exists, so "not found in this scope" on its own reads as
+    // a compiler bug. Functions are not values in Kove, and the
+    // diagnostic has to say that.
+    let d = diagnostics("fn main() { let f = to_float; }");
+    let e0201 = d.iter().find(|d| d.code == "E0201").expect("E0201");
+    assert!(
+        e0201
+            .help
+            .as_deref()
+            .unwrap_or("")
+            .contains("to_float(...)"),
+        "expected a suggestion to call it, got {:?}",
+        e0201.help
     );
 }
 
