@@ -1,10 +1,15 @@
-//! Project files: parsing `kove.toml` and scaffolding for `kove new`.
+//! Kove project files: reading `kove.toml` and laying out new projects.
+//!
+//! This lives outside `compiler/` because it is not part of the compile
+//! pipeline. It describes what a Kove *package* is, which the CLI needs
+//! today and the package manager and language server will need later, so
+//! it has exactly one definition rather than three.
 //!
 //! The manifest parser is deliberately small and strict. It reads exactly
-//! the subset of TOML that a Kove project uses today (a `[package]` section
-//! with quoted string values, plus an empty `[dependencies]` section) and
-//! rejects everything else with a message that says what to fix. When the
-//! package manager lands this grows with it.
+//! the subset of TOML that a Kove project uses today (a `[package]`
+//! section with quoted string values, plus an empty `[dependencies]`
+//! section) and rejects everything else with a message that says what to
+//! fix. When the package manager lands this grows with it.
 
 use std::path::{Path, PathBuf};
 
@@ -64,7 +69,7 @@ impl Manifest {
                 }
                 "dependencies" => {
                     return Err(format!(
-                        "line {n}: dependencies are not supported yet; the package manager is a later roadmap phase"
+                        "line {n}: dependencies are not supported yet; dependency resolution lands in v0.7"
                     ));
                 }
                 _ => {

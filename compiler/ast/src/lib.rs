@@ -13,6 +13,15 @@ pub use lower::{lower, LowerResult};
 
 use kove_diagnostics::Span;
 
+/// A stable identity for an AST node, assigned during lowering.
+///
+/// Later stages attach their own results to nodes without mutating the
+/// tree: the resolver maps a reference's `NodeId` to the binding it names,
+/// and the type checker maps a binding to its type. Spans cannot serve
+/// this purpose because two nodes can legitimately share one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct NodeId(pub u32);
+
 #[derive(Debug, Clone)]
 pub struct Program {
     pub items: Vec<Item>,
@@ -28,6 +37,10 @@ pub enum Item {
 
 #[derive(Debug, Clone)]
 pub struct Ident {
+    /// Identity of this occurrence. On a declaration (a `let` name, a
+    /// parameter, a `for` variable) the resolver keys the binding it
+    /// creates by this id.
+    pub id: NodeId,
     pub name: String,
     pub span: Span,
 }
@@ -135,6 +148,9 @@ pub enum ElseBranch {
 
 #[derive(Debug, Clone)]
 pub struct Expr {
+    /// Identity of this expression. The resolver keys name references by
+    /// it, so the type checker never resolves a name itself.
+    pub id: NodeId,
     pub kind: ExprKind,
     pub span: Span,
 }

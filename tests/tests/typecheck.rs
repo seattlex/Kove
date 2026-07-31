@@ -1,6 +1,6 @@
-//! Type checker tests: one test per diagnostic code plus programs that
-//! must check cleanly. The frontend is exercised end to end, so these are
-//! also name-resolution tests.
+//! Type checker tests: one test per diagnostic code this stage owns, plus
+//! programs that must check cleanly. Diagnostics about *names* belong to
+//! the resolver and are tested in `resolver.rs`.
 
 use kove_tests::codes;
 
@@ -54,55 +54,9 @@ fn e0012_type_mismatch() {
 }
 
 #[test]
-fn e0200_unknown_type() {
-    assert_code("fn main() { let x: Strng = \"s\"; }", "E0200");
-    assert_code("fn f(a: Nope) { }\nfn main() { }", "E0200");
-    assert_code("fn main() { let x = Missing::Variant; }", "E0200");
-    assert_code("fn main() { let x = Missing { a: 1 }; }", "E0200");
-}
-
-#[test]
-fn e0201_unknown_variable() {
-    assert_code("fn main() { println(missing); }", "E0201");
-    assert_code("fn main() { missing = 1; }", "E0201");
-    // Variables do not leak out of their block.
-    assert_code("fn main() { { let inner = 1; } println(inner); }", "E0201");
-    // The for-loop variable does not outlive the loop.
-    assert_code("fn main() { for i in 0..3 { } println(i); }", "E0201");
-}
-
-#[test]
-fn e0202_unknown_function() {
-    assert_code("fn main() { missing(); }", "E0202");
-}
-
-#[test]
 fn e0203_wrong_argument_count() {
     assert_code("fn f(a: Int) { }\nfn main() { f(1, 2); }", "E0203");
     assert_code("fn main() { println(1, 2); }", "E0203");
-}
-
-#[test]
-fn e0204_assignment_to_immutable() {
-    assert_code("fn main() { let a = 1; a = 2; }", "E0204");
-    assert_code(
-        "struct P { x: Int }\nfn main() { let p = P { x: 1 }; p.x = 2; }",
-        "E0204",
-    );
-    // Function parameters are immutable.
-    assert_code("fn f(a: Int) { a = 1; }\nfn main() { }", "E0204");
-    // The for-loop variable is immutable.
-    assert_code("fn main() { for i in 0..3 { i = 5; } }", "E0204");
-}
-
-#[test]
-fn e0205_duplicate_definitions() {
-    assert_code("fn f() { }\nfn f() { }\nfn main() { }", "E0205");
-    assert_code("struct S { }\nstruct S { }\nfn main() { }", "E0205");
-    assert_code("struct S { }\nenum S { A }\nfn main() { }", "E0205");
-    assert_code("struct S { a: Int, a: Int }\nfn main() { }", "E0205");
-    assert_code("fn f(a: Int, a: Int) { }\nfn main() { }", "E0205");
-    assert_code("fn println(x: Int) { }\nfn main() { }", "E0205");
 }
 
 #[test]
@@ -174,14 +128,6 @@ fn e0212_invalid_operands() {
 }
 
 #[test]
-fn e0213_invalid_assignment_target() {
-    assert_code(
-        "fn f() -> Int { return 1; }\nfn main() { f() = 2; }",
-        "E0213",
-    );
-}
-
-#[test]
 fn e0215_unprintable_value() {
     assert_code(
         "struct P { x: Int }\nfn main() { println(P { x: 1 }); }",
@@ -190,33 +136,9 @@ fn e0215_unprintable_value() {
 }
 
 #[test]
-fn e0216_unknown_variant() {
-    assert_code("enum S { A }\nfn main() { let s = S::B; }", "E0216");
-    assert_code("struct P { x: Int }\nfn main() { let s = P::A; }", "E0216");
-}
-
-#[test]
-fn e0217_imports_not_supported_yet() {
-    assert_code("import std::io;\nfn main() { }", "E0217");
-}
-
-#[test]
 fn e0218_for_needs_a_range() {
     assert_code("fn main() { for x in 5 { } }", "E0218");
     assert_code("fn main() { for x in \"abc\" { } }", "E0218");
-}
-
-#[test]
-fn e0219_struct_literal_of_enum() {
-    assert_code("enum S { A }\nfn main() { let s = S { a: 1 }; }", "E0219");
-}
-
-#[test]
-fn e0230_callee_must_be_a_name() {
-    assert_code(
-        "struct P { x: Int }\nfn main() { let p = P { x: 1 }; p.x(); }",
-        "E0230",
-    );
 }
 
 // --- Error-recovery quality -------------------------------------------------

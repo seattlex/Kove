@@ -1,12 +1,12 @@
 //! Shared helpers for the Kove test suite. The tests themselves live in
-//! `tests/*.rs`, one file per category (lexer, parser, ast, typecheck,
-//! diagnostics, compiler, integration).
+//! `tests/*.rs`, one file per category (lexer, parser, ast, resolver,
+//! typecheck, diagnostics, compiler, integration).
 
 use std::path::PathBuf;
 
 /// Parse a source text with the Kove grammar.
 pub fn parse(text: &str) -> reparse::Document {
-    kove_syntax::parse(text)
+    kove_parser::parse(text)
 }
 
 /// The parse tree rendered as an s-expression (for golden tests).
@@ -33,6 +33,28 @@ pub fn tokens(text: &str) -> Vec<(String, String)> {
         }
     }
     out
+}
+
+/// Lower and resolve a program, returning the AST, the resolution map and
+/// the resolver's diagnostics. Panics if the program does not parse.
+pub fn resolve(
+    text: &str,
+) -> (
+    kove_ast::Program,
+    kove_resolver::Resolutions,
+    Vec<kove_diagnostics::Diagnostic>,
+) {
+    let doc = parse(text);
+    let syntax = kove_parser::syntax_diagnostics(&doc);
+    assert!(syntax.is_empty(), "expected a clean parse, got {syntax:?}");
+    let lowered = kove_ast::lower(&doc);
+    assert!(
+        lowered.diagnostics.is_empty(),
+        "expected clean lowering, got {:?}",
+        lowered.diagnostics
+    );
+    let (resolutions, diags) = kove_resolver::resolve(&lowered.program);
+    (lowered.program, resolutions, diags)
 }
 
 /// Diagnostic codes produced by the full frontend, in source order.

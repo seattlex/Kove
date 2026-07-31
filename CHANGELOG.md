@@ -10,8 +10,9 @@ ships.
 
 ## Unreleased (0.1.0-dev)
 
-The first working milestone: roadmap phases 1 to 5, plus the start of
-phase 9.
+Everything through **v0.5** of the [roadmap](docs/roadmap.md): a
+tokenizer, parser, semantic analysis, type checker and interpreter, plus
+the start of v0.7 tooling.
 
 ### Language
 
@@ -33,10 +34,15 @@ phase 9.
 - Frontend built on [ReParse](https://github.com/seattlex/ReParse): one
   grammar gives lexing, parsing, error recovery and LSP-ready trees, so
   the compiler and the future language server cannot disagree
-- Span-preserving AST with a lowering pass independent of the concrete
-  tree
-- Two-pass name resolution and type checking, with `Ty::Error` stopping
-  error cascades so one mistake produces one diagnostic
+- One crate per pipeline stage: lexer (token vocabulary), parser
+  (grammar and recovery), ast (lowering), resolver (symbol tables,
+  scopes, name binding), typechecker (types only)
+- Span-preserving AST whose nodes carry a `NodeId`, which is how the
+  resolver hands its results to the type checker and how HIR will be
+  built later
+- Name resolution and type checking are separate stages: the type
+  checker never looks a name up, and `Ty::Error` stops cascades so one
+  mistake produces one diagnostic
 - Roughly 30 stable diagnostic codes, rendered with a source snippet,
   caret markers, labels, help and notes
 - Tree-walking reference interpreter with checked Int arithmetic
@@ -54,8 +60,9 @@ phase 9.
 
 ### Known gaps
 
-No intermediate representation or native backend yet, so `kove build`
-stops after checking and `kove run` interprets. No standard library, no
-modules, no pattern matching, no generics or enum payloads, no
-references or ownership model, no dependency resolution, no formatter
-and no language server. See the roadmap in the README.
+No intermediate representation or native backend yet (v0.6), so
+`kove build` stops after checking and `kove run` interprets. No standard
+library, no modules, no pattern matching, no generics or enum payloads,
+no references or ownership model, no dependency resolution, no formatter
+and no language server. The directories for these carry READMEs with the
+design constraints already settled; see [docs/roadmap.md](docs/roadmap.md).

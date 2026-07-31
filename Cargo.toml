@@ -2,10 +2,13 @@
 resolver = "2"
 members = [
     "compiler/diagnostics",
-    "compiler/syntax",
+    "compiler/lexer",
+    "compiler/parser",
     "compiler/ast",
+    "compiler/resolver",
     "compiler/typechecker",
     "runtime/interpreter",
+    "crates/manifest",
     "cli",
     "tests",
 ]
@@ -22,8 +25,11 @@ repository = "https://github.com/seattlex/Kove"
 reparse = { git = "https://github.com/seattlex/ReParse", rev = "73cfbe01fcc08a92d248a9e8f09341d7be5caf2d" }
 
 kove-diagnostics = { path = "compiler/diagnostics" }
-kove-syntax = { path = "compiler/syntax" }
+kove-lexer = { path = "compiler/lexer" }
+kove-parser = { path = "compiler/parser" }
 kove-ast = { path = "compiler/ast" }
+kove-resolver = { path = "compiler/resolver" }
 kove-typechecker = { path = "compiler/typechecker" }
 kove-interpreter = { path = "runtime/interpreter" }
+kove-manifest = { path = "crates/manifest" }
 kove-cli = { path = "cli" }

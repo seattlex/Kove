@@ -1,13 +1,15 @@
 //! Lowering: concrete syntax tree -> AST.
 //!
 //! Works entirely through node kind names and field names declared in
-//! `kove-syntax`. The only diagnostics produced here are the ones that
+//! `kove-parser`, and token names from `kove-lexer`. The only diagnostics
+//! produced here are the ones that
 //! need literal decoding (integer overflow, bad escapes) or item-level
 //! placement checks (statements at the top level); everything about token
 //! shapes was already reported by `syntax_diagnostics`.
 
 use crate::*;
 use kove_diagnostics::{Diagnostic, Span};
+use kove_lexer::names as tok;
 use reparse::grammar::Language;
 use reparse::node::{SyntaxElem, SyntaxNode, SyntaxToken};
 use reparse::text::TextRange;
@@ -24,6 +26,7 @@ pub fn lower(doc: &Document) -> LowerResult {
         lang: &lang,
         text: doc.text(),
         diags: Vec::new(),
+        next_id: 0,
     };
     let program = l.program(&doc.tree().root());
     LowerResult {
@@ -36,6 +39,7 @@ struct Lowerer<'a> {
     lang: &'a Language,
     text: &'a str,
     diags: Vec<Diagnostic>,
+    next_id: u32,
 }
 
 fn span(r: TextRange) -> Span {
@@ -53,6 +57,12 @@ impl<'a> Lowerer<'a> {
     fn token_kind(&self, tok: &SyntaxToken) -> &'a str {
         let lang = self.lang;
         lang.token_name(tok.kind())
+    }
+
+    fn next_id(&mut self) -> NodeId {
+        let id = NodeId(self.next_id);
+        self.next_id += 1;
+        id
     }
 
     fn field(&self, node: &SyntaxNode, name: &str) -> Option<SyntaxElem> {
@@ -73,15 +83,17 @@ impl<'a> Lowerer<'a> {
         }
     }
 
-    fn ident(&self, tok: &SyntaxToken) -> Ident {
+    fn ident(&mut self, tok: &SyntaxToken) -> Ident {
         Ident {
+            id: self.next_id(),
             name: tok.text(self.text).to_string(),
             span: span(tok.text_range()),
         }
     }
 
-    fn field_ident(&self, node: &SyntaxNode, name: &str) -> Option<Ident> {
-        self.field_token(node, name).map(|t| self.ident(&t))
+    fn field_ident(&mut self, node: &SyntaxNode, name: &str) -> Option<Ident> {
+        let tok = self.field_token(node, name)?;
+        Some(self.ident(&tok))
     }
 
     fn type_expr(&self, node: &SyntaxNode) -> TypeExpr {
@@ -226,7 +238,7 @@ impl<'a> Lowerer<'a> {
         if let Some(p) = self.field_node(node, "path") {
             for elem in p.children() {
                 if let SyntaxElem::Token(t) = elem {
-                    if self.token_kind(&t) == "identifier" && !t.is_missing() {
+                    if self.token_kind(&t) == tok::IDENTIFIER && !t.is_missing() {
                         path.push(self.ident(&t));
                     }
                 }
@@ -341,6 +353,7 @@ impl<'a> Lowerer<'a> {
         match self.field(node, field) {
             Some(e) => self.expr(&e),
             None => Expr {
+                id: self.next_id(),
                 kind: ExprKind::Error,
                 span: span(node.trimmed_range()),
             },
@@ -358,13 +371,14 @@ impl<'a> Lowerer<'a> {
         let sp = span(tok.text_range());
         if tok.is_missing() {
             return Expr {
+                id: self.next_id(),
                 kind: ExprKind::Error,
                 span: sp,
             };
         }
         let text = tok.text(self.text);
         let kind = match self.token_kind(tok) {
-            "int" => match text.parse::<i64>() {
+            tok::INT => match text.parse::<i64>() {
                 Ok(v) => ExprKind::Int(v),
                 Err(_) => {
                     self.diags.push(
@@ -375,29 +389,33 @@ impl<'a> Lowerer<'a> {
                     ExprKind::Error
                 }
             },
-            "float" => match text.parse::<f64>() {
+            tok::FLOAT => match text.parse::<f64>() {
                 Ok(v) => ExprKind::Float(v),
                 Err(_) => ExprKind::Error,
             },
-            "string" => ExprKind::Str(self.unescape(&text[1..text.len() - 1], sp.start + 1)),
-            "unterminated_string" => {
+            tok::STRING => ExprKind::Str(self.unescape(&text[1..text.len() - 1], sp.start + 1)),
+            tok::UNTERMINATED_STRING => {
                 // Already reported as E0112; decode what is there.
                 ExprKind::Str(self.unescape(&text[1..], sp.start + 1))
             }
-            "char" => {
+            tok::CHAR => {
                 let inner = self.unescape(&text[1..text.len() - 1], sp.start + 1);
                 match inner.chars().next() {
                     Some(c) => ExprKind::Char(c),
                     None => ExprKind::Error,
                 }
             }
-            "unterminated_char" => ExprKind::Error, // already reported as E0113
-            "true" => ExprKind::Bool(true),
-            "false" => ExprKind::Bool(false),
-            "identifier" => ExprKind::Var(text.to_string()),
+            tok::UNTERMINATED_CHAR => ExprKind::Error, // already reported as E0113
+            tok::TRUE => ExprKind::Bool(true),
+            tok::FALSE => ExprKind::Bool(false),
+            tok::IDENTIFIER => ExprKind::Var(text.to_string()),
             _ => ExprKind::Error,
         };
-        Expr { kind, span: sp }
+        Expr {
+            id: self.next_id(),
+            kind,
+            span: sp,
+        }
     }
 
     fn node_expr(&mut self, node: &SyntaxNode) -> Expr {
@@ -499,6 +517,7 @@ impl<'a> Lowerer<'a> {
                 return match self.field(node, "inner") {
                     Some(inner) => self.expr(&inner),
                     None => Expr {
+                        id: self.next_id(),
                         kind: ExprKind::Error,
                         span: sp,
                     },
@@ -506,7 +525,11 @@ impl<'a> Lowerer<'a> {
             }
             _ => ExprKind::Error,
         };
-        Expr { kind, span: sp }
+        Expr {
+            id: self.next_id(),
+            kind,
+            span: sp,
+        }
     }
 
     /// Decode escape sequences. `base` is the byte offset of the first

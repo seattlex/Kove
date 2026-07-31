@@ -1,6 +1,6 @@
 [package]
-name = "kove-typechecker"
-description = "Name resolution and type checking for Kove programs."
+name = "kove-resolver"
+description = "Name resolution for Kove: symbol tables, lexical scopes, and binding every name to what it refers to."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -8,5 +8,4 @@ repository.workspace = true
 
 [dependencies]
 kove-ast = { workspace = true }
-kove-resolver = { workspace = true }
 kove-diagnostics = { workspace = true }
