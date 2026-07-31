@@ -21,12 +21,13 @@ COMMANDS:
     build [file]    Check the program the way `run` would (no native backend yet)
     run [file]      Compile and execute the program
     check [file]    Report diagnostics without running
-    fmt             Format source files (not implemented yet)
+    fmt [path]...   Format .kov files in place (--check to only report)
     version         Print the toolchain version
     help            Print this message
 
 When [file] is omitted, kove looks for a project (kove.toml with
-src/main.kov), then for a plain src/main.kov or main.kov.
+src/main.kov), then for a plain src/main.kov or main.kov. `kove fmt`
+with no path formats the whole project, or the current directory.
 ";
 
 fn main() -> ExitCode {
@@ -37,10 +38,7 @@ fn main() -> ExitCode {
         Some("build") => build_or_check(args.get(1), Mode::Build),
         Some("run") => run(args.get(1)),
         Some("check") => build_or_check(args.get(1), Mode::Check),
-        Some("fmt") => {
-            eprintln!("`kove fmt` is not implemented yet; the formatter lands in v0.7.");
-            ExitCode::from(2)
-        }
+        Some("fmt") => fmt(&args[1..]),
         Some("version") | Some("--version") | Some("-V") => {
             println!("kove {}", env!("CARGO_PKG_VERSION"));
             ExitCode::SUCCESS
@@ -192,6 +190,126 @@ fn run(arg: Option<&String>) -> ExitCode {
             eprintln!("{}", kove_diagnostics::render(&diag, &c.source));
             eprintln!("error: `{path}` stopped because of a runtime error");
             ExitCode::from(1)
+        }
+    }
+}
+
+/// `kove fmt [--check] [path]...`
+///
+/// Rewrites `.kov` files in place. With `--check` nothing is written and
+/// the exit code says whether anything would change, which is what CI
+/// wants.
+fn fmt(args: &[String]) -> ExitCode {
+    let check_only = args.iter().any(|a| a == "--check");
+    let paths: Vec<&String> = args.iter().filter(|a| !a.starts_with("--")).collect();
+
+    for arg in args.iter().filter(|a| a.starts_with("--")) {
+        if arg != "--check" {
+            eprintln!("error: unknown option `{arg}` for `kove fmt`");
+            return ExitCode::from(2);
+        }
+    }
+
+    let mut files = Vec::new();
+    if paths.is_empty() {
+        // No path: the project's src/, or the current directory.
+        let root = if std::path::Path::new("src").is_dir() {
+            std::path::PathBuf::from("src")
+        } else {
+            std::path::PathBuf::from(".")
+        };
+        collect_kov_files(&root, &mut files);
+    } else {
+        for p in paths {
+            let path = std::path::PathBuf::from(p);
+            if path.is_dir() {
+                collect_kov_files(&path, &mut files);
+            } else if path.is_file() {
+                files.push(path);
+            } else {
+                eprintln!("error: no such file or directory: `{p}`");
+                return ExitCode::from(2);
+            }
+        }
+    }
+
+    if files.is_empty() {
+        eprintln!("error: no `.kov` files found");
+        return ExitCode::from(2);
+    }
+    files.sort();
+
+    let mut changed = Vec::new();
+    let mut failed = false;
+    for path in &files {
+        let display = path.display().to_string();
+        let Ok(source) = std::fs::read_to_string(path) else {
+            eprintln!("error: could not read `{display}`");
+            failed = true;
+            continue;
+        };
+        match kove_formatter::format(&source) {
+            Ok(formatted) => {
+                if formatted == source {
+                    continue;
+                }
+                changed.push(display.clone());
+                if !check_only {
+                    if let Err(err) = std::fs::write(path, formatted) {
+                        eprintln!("error: could not write `{display}`: {err}");
+                        failed = true;
+                    }
+                }
+            }
+            Err(diags) => {
+                // Formatting a file the compiler rejects would be guessing.
+                let file = kove_diagnostics::SourceFile::new(display.clone(), source);
+                eprintln!("{}", render_all(&diags, &file));
+                eprintln!("error: cannot format `{display}` because it does not parse");
+                failed = true;
+            }
+        }
+    }
+
+    if failed {
+        return ExitCode::from(1);
+    }
+    if check_only {
+        if changed.is_empty() {
+            println!("all {} file(s) are formatted", files.len());
+            return ExitCode::SUCCESS;
+        }
+        for c in &changed {
+            println!("would reformat {c}");
+        }
+        return ExitCode::from(1);
+    }
+    match changed.len() {
+        0 => println!("all {} file(s) already formatted", files.len()),
+        n => {
+            for c in &changed {
+                println!("formatted {c}");
+            }
+            println!("{n} of {} file(s) changed", files.len());
+        }
+    }
+    ExitCode::SUCCESS
+}
+
+fn collect_kov_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            // Build output is not source.
+            if path.file_name().is_some_and(|n| n == "target") {
+                continue;
+            }
+            collect_kov_files(&path, out);
+        } else if path.extension().is_some_and(|e| e == "kov") {
+            out.push(path);
         }
     }
 }

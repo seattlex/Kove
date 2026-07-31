@@ -21,4 +21,5 @@ kove-resolver = { workspace = true }
 kove-typechecker = { workspace = true }
 kove-interpreter = { workspace = true }
 kove-diagnostics = { workspace = true }
+kove-formatter = { workspace = true }
 kove-manifest = { workspace = true }

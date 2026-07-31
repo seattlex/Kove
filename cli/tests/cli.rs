@@ -179,3 +179,71 @@ fn runtime_errors_exit_1_with_a_rendered_diagnostic() {
     assert!(stderr.contains("error[E0301]"), "{stderr}");
     assert!(stderr.contains("divide by zero"), "{stderr}");
 }
+
+#[test]
+fn fmt_rewrites_a_file_and_check_reports_without_writing() {
+    let dir = std::env::temp_dir().join("kove-fmt-test");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("messy.kov");
+    let messy = "fn  main( ){let x=1;println( x );}\n";
+    std::fs::write(&file, messy).unwrap();
+
+    // --check reports and exits 1, leaving the file alone.
+    let out = kove(&["fmt", "--check", file.to_str().unwrap()]);
+    assert_eq!(out.status.code(), Some(1));
+    assert!(String::from_utf8(out.stdout)
+        .unwrap()
+        .contains("would reformat"));
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), messy);
+
+    // Without --check it rewrites.
+    let out = kove(&["fmt", file.to_str().unwrap()]);
+    assert!(out.status.success());
+    assert_eq!(
+        std::fs::read_to_string(&file).unwrap(),
+        "fn main() {\n    let x = 1;\n    println(x);\n}\n"
+    );
+
+    // And now there is nothing to do.
+    let out = kove(&["fmt", "--check", file.to_str().unwrap()]);
+    assert!(out.status.success());
+}
+
+#[test]
+fn fmt_refuses_a_file_that_does_not_parse() {
+    let dir = std::env::temp_dir().join("kove-fmt-broken");
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(&dir).unwrap();
+    let file = dir.join("broken.kov");
+    let broken = "fn main() { let x = 1 }\n";
+    std::fs::write(&file, broken).unwrap();
+
+    let out = kove(&["fmt", file.to_str().unwrap()]);
+    assert_eq!(out.status.code(), Some(1));
+    let stderr = String::from_utf8(out.stderr).unwrap();
+    assert!(stderr.contains("does not parse"), "{stderr}");
+    // The file is untouched.
+    assert_eq!(std::fs::read_to_string(&file).unwrap(), broken);
+}
+
+#[test]
+fn fmt_walks_directories() {
+    let dir = std::env::temp_dir().join("kove-fmt-dir/src/nested");
+    let _ = std::fs::remove_dir_all(std::env::temp_dir().join("kove-fmt-dir"));
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("a.kov"), "fn a(){}\n").unwrap();
+    std::fs::write(dir.parent().unwrap().join("b.kov"), "fn b(){}\n").unwrap();
+
+    let root = std::env::temp_dir().join("kove-fmt-dir");
+    let out = kove(&["fmt", root.to_str().unwrap()]);
+    assert!(out.status.success());
+    let text = String::from_utf8(out.stdout).unwrap();
+    assert!(text.contains("2 of 2 file(s) changed"), "{text}");
+}
+
+#[test]
+fn fmt_rejects_unknown_options() {
+    let out = kove(&["fmt", "--wat"]);
+    assert_eq!(out.status.code(), Some(2));
+}
