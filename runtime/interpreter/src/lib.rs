@@ -81,6 +81,11 @@ impl RuntimeError {
         RuntimeError::from(Diagnostic::error(code, message, span))
     }
 
+    fn with_note(mut self, note: impl Into<String>) -> RuntimeError {
+        self.diagnostic = Box::new(self.diagnostic.with_note(note));
+        self
+    }
+
     /// The diagnostic describing the failure.
     pub fn diagnostic(&self) -> &Diagnostic {
         &self.diagnostic
@@ -342,6 +347,19 @@ impl<'p, 'o> Interp<'p, 'o> {
                             e.span,
                         )
                     })?;
+                    return Ok(Value::Unit);
+                }
+                if name == "assert" {
+                    let Some(Value::Bool(ok)) = values.into_iter().next() else {
+                        ice("assert was given something other than a Bool")
+                    };
+                    if !ok {
+                        // The span is the condition itself, so the caret
+                        // points at what failed rather than at the call.
+                        let span = args.first().map(|a| a.span).unwrap_or(e.span);
+                        return Err(RuntimeError::new("E0306", "assertion failed", span)
+                            .with_note("this condition evaluated to `false`"));
+                    }
                     return Ok(Value::Unit);
                 }
                 let f = *self

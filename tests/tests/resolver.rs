@@ -98,6 +98,12 @@ fn e0230_callee_must_be_a_name() {
     );
 }
 
+#[test]
+fn builtin_names_are_reserved() {
+    assert_code("fn println(x: Int) { }\nfn main() { }", "E0205");
+    assert_code("fn assert(c: Bool) { }\nfn main() { }", "E0205");
+}
+
 // --- The resolution map ----------------------------------------------------
 
 /// The `Var` expressions in the first function's body, in source order.

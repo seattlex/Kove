@@ -163,11 +163,30 @@ Variants are plain (unit) values for now. Variants with associated data
 (`Ok(T)`) and pattern matching over them are the reason `match` is
 already a reserved word.
 
-## Printing
+## Built-in functions
 
-`println(value)` is the built-in output function. It prints one `Int`,
-`Float`, `Bool`, `Char` or `String` followed by a newline (E0215 for
-anything else). `Float`s print in shortest form: `2.0 / 1.0` prints `2`.
+Two functions exist without being declared. Their names are reserved, so
+defining a function called `println` or `assert` is an error (E0205).
+
+`println(value)` prints one `Int`, `Float`, `Bool`, `Char` or `String`
+followed by a newline (E0215 for anything else). `Float`s print in
+shortest form: `2.0 / 1.0` prints `2`.
+
+`assert(condition)` takes a `Bool` (E0211 otherwise) and does nothing
+when it is true. When it is false the program stops with E0306, and the
+diagnostic points at the condition rather than at the call:
+
+```text
+error[E0306]: assertion failed
+ --> src/main.kov:8:12
+  |
+8 |     assert(double(3) == 7);
+  |            ^^^^^^^^^^^^^^
+  |
+note: this condition evaluated to `false`
+```
+
+Both will move into `std` once modules exist.
 
 ## Comments
 
@@ -220,4 +239,4 @@ native compilation, a standard library, modules, pattern matching with
 exhaustiveness checking, enum payloads and generics (`Result<T, E>`),
 collections and `for` over them, references (`&data`, `&mut data`) under
 a real ownership model ([ownership.md](ownership.md)), dependency
-resolution for the package manager, the formatter and the LSP.
+resolution for the package manager, and the LSP.

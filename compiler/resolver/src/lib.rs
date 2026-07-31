@@ -73,13 +73,21 @@ pub enum Resolution {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Builtin {
     Println,
+    Assert,
 }
 
 impl Builtin {
+    pub const ALL: [Builtin; 2] = [Builtin::Println, Builtin::Assert];
+
     pub fn name(self) -> &'static str {
         match self {
             Builtin::Println => "println",
+            Builtin::Assert => "assert",
         }
+    }
+
+    pub fn from_name(name: &str) -> Option<Builtin> {
+        Builtin::ALL.into_iter().find(|b| b.name() == name)
     }
 }
 
@@ -255,11 +263,14 @@ impl Resolver {
                     self.out.enum_by_name.insert(e.name.name.clone(), id);
                 }
                 Item::Function(f) => {
-                    if f.name.name == Builtin::Println.name() {
+                    if Builtin::from_name(&f.name.name).is_some() {
                         self.diags.push(
                             Diagnostic::error(
                                 "E0205",
-                                "the name `println` is reserved for the built-in print function",
+                                format!(
+                                    "the name `{}` is reserved for a built-in function",
+                                    f.name.name
+                                ),
                                 f.name.span,
                             )
                             .with_label("cannot be redefined"),
@@ -651,10 +662,10 @@ impl Resolver {
             return;
         };
 
-        if name == Builtin::Println.name() {
+        if let Some(builtin) = Builtin::from_name(name) {
             self.out
                 .refs
-                .insert(callee.id, Resolution::Builtin(Builtin::Println));
+                .insert(callee.id, Resolution::Builtin(builtin));
             return;
         }
         let resolution = match self.out.func_by_name.get(name) {

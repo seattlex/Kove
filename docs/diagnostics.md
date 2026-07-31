@@ -51,13 +51,13 @@ diagnostic downstream.
 | E0202 | Cannot find a function with this name. |
 | E0203 | Wrong number of call arguments. |
 | E0204 | Assignment to an immutable variable. Variables need `let mut` to be assignable. |
-| E0205 | Duplicate definition (function, type, field, variant, parameter, or shadowing the built-in `println`). |
+| E0205 | Duplicate definition (function, type, field, variant, parameter), or a name reserved for a built-in (`println`, `assert`). |
 | E0206 | No such field on this struct. |
 | E0207 | Struct literal is missing fields. |
 | E0208 | Struct literal initializes a field more than once. |
 | E0209 | Field access on a value that has no fields. |
 | E0210 | A function with a return type has a path that doesn't return. |
-| E0211 | An `if`/`while` condition isn't `Bool`. Kove has no truthiness. |
+| E0211 | An `if`/`while` condition, or an `assert` argument, isn't `Bool`. Kove has no truthiness. |
 | E0212 | Operator applied to unsupported operand types (including `Int`/`Float` mixing). |
 | E0213 | Invalid assignment target. Only variables and their field chains. |
 | E0214 | Missing or malformed `main` (needed by `run` and `build`). |
@@ -79,6 +79,7 @@ Reported by the interpreter with the span of the failing operation.
 | E0303 | Remainder by zero (`Int`). |
 | E0304 | Recursion limit (1000 nested calls) exceeded. |
 | E0305 | Writing program output failed. |
+| E0306 | An `assert` condition was false. |
 
 `Float` follows IEEE 754 and doesn't raise E03xx errors.
 

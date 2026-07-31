@@ -531,20 +531,26 @@ impl<'r> Checker<'r> {
 
     fn check_call(&mut self, call: &Expr, callee: &Expr, args: &[Expr]) -> Ty {
         match self.res.resolution(callee.id) {
-            Resolution::Builtin(Builtin::Println) => {
-                if args.len() != 1 {
-                    self.diags.push(
-                        Diagnostic::error(
-                            "E0203",
-                            format!(
-                                "`println` takes exactly 1 argument, but {} were supplied",
-                                args.len()
-                            ),
-                            call.span,
-                        )
-                        .with_label("expected 1 argument"),
-                    );
+            Resolution::Builtin(Builtin::Assert) => {
+                self.check_builtin_arity(call, args, Builtin::Assert, 1);
+                for a in args {
+                    let ty = self.check_expr(a);
+                    if !compat(ty, Ty::Bool) {
+                        self.diags.push(
+                            Diagnostic::error(
+                                "E0211",
+                                format!("`assert` needs a `Bool`, found `{}`", self.ty_name(ty)),
+                                a.span,
+                            )
+                            .with_label("expected `Bool`")
+                            .with_help("write a comparison, such as `assert(x == 1)`"),
+                        );
+                    }
                 }
+                Ty::Unit
+            }
+            Resolution::Builtin(Builtin::Println) => {
+                self.check_builtin_arity(call, args, Builtin::Println, 1);
                 for a in args {
                     let ty = self.check_expr(a);
                     if !matches!(
@@ -641,6 +647,31 @@ impl<'r> Checker<'r> {
                 Ty::Error
             }
         }
+    }
+
+    fn check_builtin_arity(&mut self, call: &Expr, args: &[Expr], builtin: Builtin, want: usize) {
+        if args.len() == want {
+            return;
+        }
+        self.diags.push(
+            Diagnostic::error(
+                "E0203",
+                format!(
+                    "`{}` takes exactly {} argument{}, but {} {} supplied",
+                    builtin.name(),
+                    want,
+                    if want == 1 { "" } else { "s" },
+                    args.len(),
+                    if args.len() == 1 { "was" } else { "were" }
+                ),
+                call.span,
+            )
+            .with_label(format!(
+                "expected {} argument{}",
+                want,
+                if want == 1 { "" } else { "s" }
+            )),
+        );
     }
 
     fn check_struct_lit(&mut self, name: &Ident, fields: &[(Ident, Expr)]) -> Ty {

@@ -128,6 +128,16 @@ fn e0304_recursion_limit() {
 }
 
 #[test]
+fn e0306_failed_assertion() {
+    assert_eq!(
+        run_expecting_runtime_error("fn main() { assert(1 == 2); }"),
+        "E0306"
+    );
+    // A passing assertion is invisible.
+    assert_eq!(run("fn main() { assert(true); println(1); }"), "1\n");
+}
+
+#[test]
 fn float_division_by_zero_is_not_an_error() {
     // IEEE semantics for Float, checked semantics for Int. Documented.
     assert_eq!(run("fn main() { println(1.0 / 0.0); }"), "inf\n");

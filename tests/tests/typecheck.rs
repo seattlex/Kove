@@ -128,6 +128,14 @@ fn e0212_invalid_operands() {
 }
 
 #[test]
+fn assert_takes_one_bool() {
+    assert_ok("fn main() { assert(1 == 1); }");
+    assert_code("fn main() { assert(1); }", "E0211");
+    assert_code("fn main() { assert(); }", "E0203");
+    assert_code("fn main() { assert(true, false); }", "E0203");
+}
+
+#[test]
 fn e0215_unprintable_value() {
     assert_code(
         "struct P { x: Int }\nfn main() { println(P { x: 1 }); }",
