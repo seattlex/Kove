@@ -53,7 +53,8 @@ Lives in `compiler/parser` and `compiler/ast`.
 - [x] Mutability tracked on bindings
 - [x] Diagnostics for unknown and duplicate names, with suggestions for
       near misses
-- [x] The unused-binding lint (W0001), the first warning
+- [x] Lints over the resolver's output: W0001 (a binding whose value is
+      never read) and W0002 (a function nothing can reach)
 
 Lives in `compiler/resolver`.
 
