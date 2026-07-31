@@ -52,6 +52,13 @@ jobs:
       - name: Run the Kove test suite
         run: cargo run --quiet -- test examples/tests.kov
 
+      # The editor integration has no build step, so this is what stands
+      # in for compiling it.
+      - name: Check the VS Code extension
+        run: |
+          node --check editors/vscode/extension.js
+          node editors/vscode/test/grammar.test.js
+
       # Kove code in the repository is formatted by Kove's own formatter.
       # tests/programs/invalid is excluded: those files do not parse by
       # design, and fmt refuses input the compiler would reject.
