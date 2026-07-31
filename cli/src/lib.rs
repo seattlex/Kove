@@ -54,7 +54,8 @@ pub fn compile(name: &str, text: &str) -> Compilation {
 pub fn compile_executable(name: &str, text: &str) -> Compilation {
     let mut c = compile(name, text);
     if !c.has_errors() {
-        c.diagnostics.extend(kove_typechecker::check_main(&c.program));
+        c.diagnostics
+            .extend(kove_typechecker::check_main(&c.program));
     }
     c
 }
@@ -69,6 +70,10 @@ const INTERPRETER_STACK: usize = 256 * 1024 * 1024;
 
 /// Execute a clean compilation's `main`, writing program output to `out`.
 /// On a runtime error, returns the renderable diagnostic.
+// The diagnostic is returned unboxed on purpose: this runs once per
+// program, so the caller's convenience beats shrinking a `Result` that is
+// constructed at most once.
+#[allow(clippy::result_large_err)]
 pub fn run(c: &Compilation, out: &mut (dyn Write + Send)) -> Result<(), Diagnostic> {
     debug_assert!(!c.has_errors());
     let result = std::thread::scope(|s| {
@@ -84,5 +89,5 @@ pub fn run(c: &Compilation, out: &mut (dyn Write + Send)) -> Result<(), Diagnost
             Err(panic) => std::panic::resume_unwind(panic),
         }
     });
-    result.map_err(|e| e.diagnostic)
+    result.map_err(kove_interpreter::RuntimeError::into_diagnostic)
 }

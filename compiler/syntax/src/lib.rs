@@ -382,10 +382,7 @@ fn build_language() -> Arc<Language> {
 
     let import_path = g.rule(
         "import_path",
-        seq(vec![
-            t(ident),
-            rep0(seq(vec![t(coloncolon), t(ident)])),
-        ]),
+        seq(vec![t(ident), rep0(seq(vec![t(coloncolon), t(ident)]))]),
     );
     let import_decl = g.rule(
         "import_declaration",
@@ -431,7 +428,12 @@ fn build_language() -> Arc<Language> {
     g.highlight(hl(Hc::Type).token(ident).field("name").in_rule(enum_decl));
     g.highlight(hl(Hc::Type).token(ident).field("name").in_rule(struct_lit));
     g.highlight(hl(Hc::Type).token(ident).field("base").in_rule(path_expr));
-    g.highlight(hl(Hc::Function).token(ident).field("name").in_rule(function));
+    g.highlight(
+        hl(Hc::Function)
+            .token(ident)
+            .field("name")
+            .in_rule(function),
+    );
     g.highlight(hl(Hc::Function).token(ident).field("callee"));
     g.highlight(hl(Hc::Parameter).token(ident).in_rule(parameter));
     g.highlight(
@@ -485,10 +487,8 @@ pub fn syntax_diagnostics(doc: &Document) -> Vec<Diagnostic> {
                 Diagnostic::error("E0102", "expected an expression", span)
                     .with_label("an expression is missing here")
             }
-            DiagMessage::UnexpectedInput => {
-                Diagnostic::error("E0103", "unexpected input", span)
-                    .with_label("the parser could not make sense of this")
-            }
+            DiagMessage::UnexpectedInput => Diagnostic::error("E0103", "unexpected input", span)
+                .with_label("the parser could not make sense of this"),
             DiagMessage::UnrecognizedCharacter => {
                 let ch = text[d.range.start as usize..d.range.end as usize]
                     .chars()

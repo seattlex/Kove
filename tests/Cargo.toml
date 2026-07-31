@@ -3,6 +3,7 @@ name = "kove-tests"
 description = "The Kove compiler test suite: lexer, parser, AST, type checker, diagnostics, driver and end-to-end program tests."
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 repository.workspace = true
 
 [lib]

@@ -127,6 +127,17 @@ The output format is golden-tested, so it's a contract, not an accident.
   the ownership design ahead
 - [CONTRIBUTING.md](CONTRIBUTING.md) - engineering principles and how to
   work on the compiler
+- [CHANGELOG.md](CHANGELOG.md) - what has landed so far
+
+## License
+
+Dual-licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option, matching [ReParse](https://github.com/seattlex/ReParse)
+so the two projects stay compatible.
 
 ## Repository layout
 

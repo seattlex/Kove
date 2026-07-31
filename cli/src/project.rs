@@ -42,7 +42,9 @@ impl Manifest {
                 continue;
             }
             let Some((key, value)) = line.split_once('=') else {
-                return Err(format!("line {n}: expected `key = \"value\"`, found `{line}`"));
+                return Err(format!(
+                    "line {n}: expected `key = \"value\"`, found `{line}`"
+                ));
             };
             let key = key.trim();
             match section.as_str() {
@@ -75,9 +77,7 @@ impl Manifest {
 
         let name = name.ok_or("missing `name` in [package]")?;
         if !valid_name(&name) {
-            return Err(format!(
-                "`{name}` is not a valid package name; {NAME_RULE}"
-            ));
+            return Err(format!("`{name}` is not a valid package name; {NAME_RULE}"));
         }
         let version = version.ok_or("missing `version` in [package]")?;
         Ok(Manifest { name, version })
@@ -121,12 +121,11 @@ pub fn scaffold(name: &str, at: &Path) -> Result<Vec<PathBuf>, String> {
         return Err(format!("`{}` already exists", root.display()));
     }
     let src = root.join("src");
-    std::fs::create_dir_all(&src).map_err(|e| format!("could not create `{}`: {e}", src.display()))?;
+    std::fs::create_dir_all(&src)
+        .map_err(|e| format!("could not create `{}`: {e}", src.display()))?;
 
     let manifest_path = root.join("kove.toml");
-    let manifest = format!(
-        "[package]\nname = \"{name}\"\nversion = \"0.1.0\"\n\n[dependencies]\n"
-    );
+    let manifest = format!("[package]\nname = \"{name}\"\nversion = \"0.1.0\"\n\n[dependencies]\n");
     std::fs::write(&manifest_path, manifest)
         .map_err(|e| format!("could not write `{}`: {e}", manifest_path.display()))?;
 
@@ -176,9 +175,15 @@ mod tests {
 
     #[test]
     fn bad_input_gets_line_numbers() {
-        assert!(Manifest::parse("[package]\nname\n").unwrap_err().starts_with("line 2"));
-        assert!(Manifest::parse("name = \"p\"\n").unwrap_err().contains("outside of any section"));
-        assert!(Manifest::parse("[wrong]\n").unwrap_err().contains("unknown section"));
+        assert!(Manifest::parse("[package]\nname\n")
+            .unwrap_err()
+            .starts_with("line 2"));
+        assert!(Manifest::parse("name = \"p\"\n")
+            .unwrap_err()
+            .contains("outside of any section"));
+        assert!(Manifest::parse("[wrong]\n")
+            .unwrap_err()
+            .contains("unknown section"));
         assert!(Manifest::parse("[package]\nname = 3\n")
             .unwrap_err()
             .contains("quoted string"));
