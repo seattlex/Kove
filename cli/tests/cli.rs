@@ -412,3 +412,55 @@ fn check_json_on_a_clean_file_is_an_empty_list() {
 fn check_rejects_unknown_options() {
     assert_eq!(kove(&["check", "--nope"]).status.code(), Some(2));
 }
+
+#[test]
+fn check_reads_stdin_when_the_path_is_a_dash() {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_kove"))
+        .args(["check", "--json", "--name=src/main.kov", "-"])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    use std::io::Write;
+    child
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(b"fn main() { let age: Int = \"x\"; println(age); }")
+        .unwrap();
+    let out = child.wait_with_output().unwrap();
+
+    assert_eq!(out.status.code(), Some(1));
+    let text = String::from_utf8(out.stdout).unwrap();
+    // The name given is what diagnostics report, since stdin has no path.
+    assert!(text.contains("\"file\": \"src/main.kov\""), "{text}");
+    assert!(text.contains("\"code\": \"E0012\""), "{text}");
+}
+
+#[test]
+fn check_from_stdin_without_a_name_says_stdin() {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_kove"))
+        .args(["check", "--json", "-"])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    use std::io::Write;
+    child
+        .stdin
+        .as_mut()
+        .unwrap()
+        .write_all(b"fn main() { }")
+        .unwrap();
+    let out = child.wait_with_output().unwrap();
+    assert!(out.status.success());
+    assert!(String::from_utf8(out.stdout)
+        .unwrap()
+        .contains("\"file\": \"<stdin>\""));
+}
+
+#[test]
+fn check_takes_at_most_one_file() {
+    assert_eq!(kove(&["check", "a.kov", "b.kov"]).status.code(), Some(2));
+}

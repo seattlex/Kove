@@ -20,7 +20,8 @@ COMMANDS:
     new <name>      Create a new project (kove.toml + src/main.kov)
     build [file]    Check the program the way `run` would (no native backend yet)
     run [file]      Compile and execute the program
-    check [file]    Report diagnostics without running (--json for tools)
+    check [file]    Report diagnostics without running
+                    (--json for tools, - to read stdin)
     test [file]     Run every `test_...` function in the program
     explain <code>  Explain a diagnostic code, such as E0012
                     (--list to show every code)
@@ -38,7 +39,7 @@ fn main() -> ExitCode {
     let command = args.first().map(String::as_str);
     match command {
         Some("new") => new_project(args.get(1)),
-        Some("build") => build_or_check(args.get(1), Mode::Build),
+        Some("build") => build(args.get(1)),
         Some("run") => run(args.get(1)),
         Some("check") => check(&args[1..]),
         Some("test") => test(args.get(1)),
@@ -64,43 +65,71 @@ fn main() -> ExitCode {
     }
 }
 
-enum Mode {
-    Build,
-    Check,
-}
-
-/// `kove check [--json] [file]`
+/// `kove check [--json] [--name=<path>] [file | -]`
 ///
 /// With `--json` the diagnostics go to stdout in the machine-readable
-/// shape documented in `docs/diagnostics.md`, which is what the editor
-/// integration reads. Exit codes are the same either way.
+/// shape documented in `docs/diagnostics.md`. With `-` the source is read
+/// from stdin, which is how an editor checks a buffer that has not been
+/// saved; `--name=` then says what path to report, since stdin has none.
+/// Exit codes are the same in every mode.
 fn check(args: &[String]) -> ExitCode {
-    let json = args.iter().any(|a| a == "--json");
-    for arg in args.iter().filter(|a| a.starts_with("--")) {
-        if arg != "--json" {
+    let mut json = false;
+    let mut name: Option<String> = None;
+    let mut file: Option<&String> = None;
+    for arg in args {
+        if arg == "--json" {
+            json = true;
+        } else if let Some(value) = arg.strip_prefix("--name=") {
+            name = Some(value.to_string());
+        } else if arg.starts_with("--") {
             eprintln!("error: unknown option `{arg}` for `kove check`");
+            return ExitCode::from(2);
+        } else if file.is_none() {
+            file = Some(arg);
+        } else {
+            eprintln!("error: `kove check` takes at most one file");
             return ExitCode::from(2);
         }
     }
-    let file = args.iter().find(|a| !a.starts_with("--"));
-    if !json {
-        return build_or_check(file, Mode::Check);
-    }
 
-    let (path, text) = match load(file) {
+    let (path, text) = match source_for(file, name) {
         Ok(v) => v,
         Err(code) => return code,
     };
     let c = kove_cli::compile(&path, &text);
-    print!(
-        "{}",
-        kove_diagnostics::json::render_json(&c.diagnostics, &c.source)
-    );
+
+    if json {
+        print!(
+            "{}",
+            kove_diagnostics::json::render_json(&c.diagnostics, &c.source)
+        );
+    } else if let Some(code) = report(&c) {
+        return code;
+    } else {
+        println!("checked `{path}`: no errors found");
+    }
+
     if c.has_errors() {
         ExitCode::from(1)
     } else {
         ExitCode::SUCCESS
     }
+}
+
+/// Resolve what to check: stdin when the path is `-`, otherwise a file.
+fn source_for(file: Option<&String>, name: Option<String>) -> Result<(String, String), ExitCode> {
+    if file.map(String::as_str) == Some("-") {
+        let mut text = String::new();
+        if let Err(err) = std::io::Read::read_to_string(&mut std::io::stdin(), &mut text) {
+            eprintln!("error: could not read stdin: {err}");
+            return Err(ExitCode::from(2));
+        }
+        // Diagnostics need something to point at, and `<stdin>` is what
+        // they say when the caller did not supply a name.
+        return Ok((name.unwrap_or_else(|| "<stdin>".to_string()), text));
+    }
+    let (path, text) = load(file)?;
+    Ok((name.unwrap_or(path), text))
 }
 
 fn new_project(name: Option<&String>) -> ExitCode {
@@ -218,26 +247,20 @@ fn plural(n: usize) -> &'static str {
     }
 }
 
-fn build_or_check(arg: Option<&String>, mode: Mode) -> ExitCode {
+fn build(arg: Option<&String>) -> ExitCode {
     let (path, text) = match load(arg) {
         Ok(v) => v,
         Err(code) => return code,
     };
-    let c = match mode {
-        Mode::Build => kove_cli::compile_executable(&path, &text),
-        Mode::Check => kove_cli::compile(&path, &text),
-    };
+    let c = kove_cli::compile_executable(&path, &text);
     if let Some(code) = report(&c) {
         return code;
     }
-    match mode {
-        Mode::Check => println!("checked `{path}`: no errors found"),
-        Mode::Build => println!(
-            "checked `{path}`: no errors found\n\
-             note: native code generation is not implemented yet (v0.6); \
-             use `kove run {path}` to execute the program"
-        ),
-    }
+    println!(
+        "checked `{path}`: no errors found\n\
+         note: native code generation is not implemented yet (v0.6); \
+         use `kove run {path}` to execute the program"
+    );
     ExitCode::SUCCESS
 }
 
