@@ -66,15 +66,36 @@ impl Value {
 }
 
 /// A runtime failure, carrying a renderable diagnostic.
+///
+/// The diagnostic is boxed because every evaluation step returns a
+/// `Result` with this as its error type, and a bare `Diagnostic` would
+/// make each of those results 128 bytes wide for a case that almost never
+/// happens.
 #[derive(Debug)]
 pub struct RuntimeError {
-    pub diagnostic: Diagnostic,
+    diagnostic: Box<Diagnostic>,
 }
 
 impl RuntimeError {
     fn new(code: &'static str, message: impl Into<String>, span: Span) -> RuntimeError {
+        RuntimeError::from(Diagnostic::error(code, message, span))
+    }
+
+    /// The diagnostic describing the failure.
+    pub fn diagnostic(&self) -> &Diagnostic {
+        &self.diagnostic
+    }
+
+    /// Consume the error and take its diagnostic.
+    pub fn into_diagnostic(self) -> Diagnostic {
+        *self.diagnostic
+    }
+}
+
+impl From<Diagnostic> for RuntimeError {
+    fn from(diagnostic: Diagnostic) -> RuntimeError {
         RuntimeError {
-            diagnostic: Diagnostic::error(code, message, span),
+            diagnostic: Box::new(diagnostic),
         }
     }
 }
@@ -486,23 +507,17 @@ impl<'p, 'o> Interp<'p, 'o> {
 }
 
 fn overflow(action: &str, span: Span) -> RuntimeError {
-    RuntimeError::new(
+    Diagnostic::error(
         "E0302",
         format!("attempt to {} with overflow", action),
         span,
     )
-    .with_note_int_range()
-}
-
-impl RuntimeError {
-    fn with_note_int_range(mut self) -> RuntimeError {
-        self.diagnostic = self.diagnostic.with_note(format!(
-            "`Int` values range from {} to {}",
-            i64::MIN,
-            i64::MAX
-        ));
-        self
-    }
+    .with_note(format!(
+        "`Int` values range from {} to {}",
+        i64::MIN,
+        i64::MAX
+    ))
+    .into()
 }
 
 /// Internal compiler error: the type checker let something through that it
