@@ -128,6 +128,16 @@ The output format is golden-tested, so it's a contract, not an accident.
 - [CONTRIBUTING.md](CONTRIBUTING.md) - engineering principles and how to
   work on the compiler
 
+## License
+
+Dual-licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option, matching [ReParse](https://github.com/seattlex/ReParse)
+so the two projects stay compatible.
+
 ## Repository layout
 
 ```text

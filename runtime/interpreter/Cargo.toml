@@ -3,6 +3,7 @@ name = "kove-interpreter"
 description = "The tree-walking reference interpreter behind `kove run`."
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 repository.workspace = true
 
 [dependencies]

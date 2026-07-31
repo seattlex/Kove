@@ -3,6 +3,7 @@ name = "kove-typechecker"
 description = "Name resolution and type checking for Kove programs."
 version.workspace = true
 edition.workspace = true
+license.workspace = true
 repository.workspace = true
 
 [dependencies]
