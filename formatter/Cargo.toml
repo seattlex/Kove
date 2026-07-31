@@ -1,0 +1,12 @@
+[package]
+name = "kove-formatter"
+description = "The Kove formatter: deterministic, opinionated source formatting behind `kove fmt`."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+reparse = { workspace = true }
+kove-parser = { workspace = true }
+kove-diagnostics = { workspace = true }

@@ -29,6 +29,15 @@ name = "kove-diagnostics"
 version = "0.1.0-dev"
 
 [[package]]
+name = "kove-formatter"
+version = "0.1.0-dev"
+dependencies = [
+ "kove-diagnostics",
+ "kove-parser",
+ "reparse",
+]
+
+[[package]]
 name = "kove-interpreter"
 version = "0.1.0-dev"
 dependencies = [

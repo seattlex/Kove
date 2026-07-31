@@ -9,6 +9,7 @@ members = [
     "compiler/typechecker",
     "runtime/interpreter",
     "crates/manifest",
+    "formatter",
     "cli",
     "tests",
 ]
@@ -32,4 +33,5 @@ kove-resolver = { path = "compiler/resolver" }
 kove-typechecker = { path = "compiler/typechecker" }
 kove-interpreter = { path = "runtime/interpreter" }
 kove-manifest = { path = "crates/manifest" }
+kove-formatter = { path = "formatter" }
 kove-cli = { path = "cli" }
