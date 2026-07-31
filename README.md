@@ -127,6 +127,7 @@ The output format is golden-tested, so it's a contract, not an accident.
   the ownership design ahead
 - [CONTRIBUTING.md](CONTRIBUTING.md) - engineering principles and how to
   work on the compiler
+- [CHANGELOG.md](CHANGELOG.md) - what has landed so far
 
 ## License
 
