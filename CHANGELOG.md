@@ -71,6 +71,9 @@ terminal or from an editor.
   diagnostics as you type and on save, format on save, snippets, and
   commands for run, check, test, format and explain. No build step, and
   everything it shows comes from the `kove` binary
+- The extension is tested without VS Code: `vscode` and `child_process`
+  are stubbed, so the tests cover what it actually does with editor
+  events and toolchain output, not just whether its JSON parses
 
 ### Tooling
 
@@ -100,5 +103,6 @@ No intermediate representation or native backend yet (v0.6), so
 `kove build` stops after checking and `kove run` interprets. No standard
 library, no modules, no pattern matching, no generics or enum payloads,
 no references or ownership model, no dependency resolution, and no
-language server. The formatter does not wrap long expressions yet. The directories for these carry READMEs with the
-design constraints already settled; see [docs/roadmap.md](docs/roadmap.md).
+language server. The formatter does not wrap long expressions yet. The
+directories for these carry READMEs with the design constraints already
+settled; see [docs/roadmap.md](docs/roadmap.md).

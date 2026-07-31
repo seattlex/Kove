@@ -84,6 +84,22 @@ $ cd editors/vscode && npx @vscode/vsce package
 
 Reload the window afterwards.
 
+## Working on it
+
+Two test files, both plain Node with no dependencies:
+
+```console
+$ node editors/vscode/test/grammar.test.js     # the static files
+$ node editors/vscode/test/extension.test.js   # what it does
+```
+
+The second one stubs `vscode` and `child_process` and runs the real
+`extension.js`, so a test can fire an editor event and choose when each
+toolchain call finishes. That is what makes the timing behaviour
+testable: debouncing, cancelling a check when its file closes, and
+dropping a slow result that a newer one has already overtaken. Both run
+in CI.
+
 ## Known limits
 
 - No completion, go-to-definition or rename yet. Those want the language
