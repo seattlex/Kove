@@ -22,10 +22,7 @@ fn describe(status: Status) -> String {
 }
 
 fn main() {
-    let account = Account {
-        name: "kove",
-        status: Status::Suspended
-    };
+    let account = Account { name: "kove", status: Status::Suspended };
     println(describe(account.status));
     println(describe(Status::Active));
     println(account.status != Status::Banned);

@@ -11,10 +11,7 @@ enum Status {
 }
 
 fn main() {
-    let mut user = User {
-        name: "Alex",
-        age: 20
-    };
+    let mut user = User { name: "Alex", age: 20 };
     user.age = user.age + 1;
 
     let status = Status::Active;

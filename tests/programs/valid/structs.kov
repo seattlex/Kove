@@ -7,17 +7,11 @@ struct User {
 }
 
 fn birthday(user: User) -> User {
-    return User {
-        name: user.name,
-        age: user.age + 1
-    };
+    return User { name: user.name, age: user.age + 1 };
 }
 
 fn main() {
-    let mut user = User {
-        name: "Alex",
-        age: 20
-    };
+    let mut user = User { name: "Alex", age: 20 };
 
     println(user.name);
     println(user.age);
