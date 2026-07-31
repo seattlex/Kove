@@ -66,8 +66,8 @@ A `\u{...}` escape has to name a Unicode scalar value, so at most six
 hex digits, nothing above 10FFFF, and not a surrogate (E0115).
 
 `Int` and `Float` never mix implicitly (E0212). `1 + 1.5` is an error;
-write `1.0 + 1.5`. Sized types (`Int32`, `Float32`, ...) are reserved
-for later.
+write `1.0 + 1.5`, or convert with `to_float` and `to_int`. Sized types
+(`Int32`, `Float32`, ...) are reserved for later.
 
 ## Functions
 
@@ -204,8 +204,9 @@ already a reserved word.
 
 ## Built-in functions
 
-Two functions exist without being declared. Their names are reserved, so
-defining a function called `println` or `assert` is an error (E0205).
+Four functions exist without being declared. Their names are reserved,
+so defining a function called `println`, `assert`, `to_float` or
+`to_int` is an error (E0205).
 
 `println(value)` prints one `Int`, `Float`, `Bool`, `Char` or `String`
 followed by a newline (E0215 for anything else). `Float`s print in
@@ -225,7 +226,29 @@ error[E0306]: assertion failed
 note: this condition evaluated to `false`
 ```
 
-Both will move into `std` once modules exist.
+`to_float(n)` takes an `Int` and gives a `Float`. `to_int(x)` takes a
+`Float` and gives an `Int`, truncating toward zero, which is the
+direction `Int` division already rounds. They are how the two numeric
+types meet, since nothing converts on its own:
+
+```kov
+let total = 7;
+let count = 2;
+let average = to_float(total) / to_float(count);   // 3.5
+
+to_int(2.9)          // 2
+to_int(0.0 - 2.9)    // -2
+```
+
+A `Float` that no `Int` can represent stops the program with E0307
+rather than wrapping to something arbitrary. That covers `NaN`, both
+infinities, and any value past the `Int` range:
+
+```text
+error[E0307]: cannot convert `inf` to Int: it is out of range
+```
+
+All four will move into `std` once modules exist.
 
 ## Comments
 

@@ -31,7 +31,9 @@ terminal or from an editor.
   lowering so it inherits every rule of the long form
 - Structs with literals, field access and field assignment
 - Enums with unit variants, `Enum::Variant` paths and equality
-- `println` and `assert` as built-in functions, with reserved names
+- `println`, `assert`, `to_float` and `to_int` as built-in functions,
+  with reserved names. The conversions are the only way `Int` and
+  `Float` meet, since neither converts on its own
 - Escape sequences including `\u{...}` for a code point in hexadecimal
 - Line and block comments
 - `import` and `match` reserved, with `import` reporting E0217 so the
