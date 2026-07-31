@@ -1,0 +1,12 @@
+# Public keys trusted to sign commits in this repository.
+#
+# Git does not read this by default. Point it here once:
+#
+#     git config gpg.ssh.allowedSignersFile .allowed_signers
+#
+# after which `git log --show-signature` and `git verify-commit <rev>`
+# will report signatures from these keys as good.
+#
+# Format: <principal> <namespaces> <key>. The `git` namespace is what
+# commit signatures use.
+kaspersolo3010@gmail.com namespaces="git" ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFlNj9jYgvhaaGRTQJSZqGKexxNX4dzgig1ND6sN8zx8

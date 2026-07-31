@@ -55,6 +55,31 @@ Kove is designed as a language ecosystem, not merely an interpreter.
 Milestones are small, but every piece is built so the complete vision
 (native backend, package manager, LSP) has room to land.
 
+## Commit signing
+
+Commits should be signed. Kove uses SSH signing, so the key you already
+push with can sign too:
+
+```console
+$ git config gpg.format ssh
+$ git config user.signingkey ~/.ssh/id_ed25519.pub
+$ git config commit.gpgsign true
+```
+
+To verify signatures locally, point git at the repository's list of
+trusted keys:
+
+```console
+$ git config gpg.ssh.allowedSignersFile .allowed_signers
+$ git log --show-signature -1
+```
+
+Add your public key to [.allowed_signers](.allowed_signers) in the same
+change as your first signed commit. For GitHub to show a commit as
+Verified, the same public key also has to be registered on your account
+as a *signing* key, which is a separate entry from an authentication
+key.
+
 ## Diagnostics style
 
 Diagnostics are a feature, with a golden-tested format. When writing
