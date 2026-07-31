@@ -1,0 +1,136 @@
+{
+  "name": "kove",
+  "displayName": "Kove",
+  "description": "Kove language support: highlighting, diagnostics, formatting, and the kove commands.",
+  "version": "0.1.0",
+  "publisher": "seattlex",
+  "license": "MIT OR Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seattlex/Kove.git",
+    "directory": "editors/vscode"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Formatters"
+  ],
+  "keywords": [
+    "kove",
+    "kov"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:kove"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "kove",
+        "aliases": [
+          "Kove",
+          "kove"
+        ],
+        "extensions": [
+          ".kov"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "kove",
+        "scopeName": "source.kove",
+        "path": "./syntaxes/kove.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "kove",
+        "path": "./snippets/kove.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "kove.run",
+        "title": "Kove: Run File",
+        "icon": "$(play)"
+      },
+      {
+        "command": "kove.check",
+        "title": "Kove: Check File"
+      },
+      {
+        "command": "kove.test",
+        "title": "Kove: Run Tests"
+      },
+      {
+        "command": "kove.format",
+        "title": "Kove: Format File"
+      },
+      {
+        "command": "kove.explain",
+        "title": "Kove: Explain Diagnostic Code"
+      },
+      {
+        "command": "kove.showVersion",
+        "title": "Kove: Show Toolchain Version"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "kove.run",
+          "when": "resourceLangId == kove",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "kove.run",
+          "when": "resourceLangId == kove"
+        },
+        {
+          "command": "kove.check",
+          "when": "resourceLangId == kove"
+        },
+        {
+          "command": "kove.test",
+          "when": "resourceLangId == kove"
+        },
+        {
+          "command": "kove.format",
+          "when": "resourceLangId == kove"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Kove",
+      "properties": {
+        "kove.path": {
+          "type": "string",
+          "default": "kove",
+          "markdownDescription": "Path to the `kove` executable. Leave as `kove` to use the one on your PATH."
+        },
+        "kove.checkOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Re-check the file and update diagnostics when it is saved."
+        },
+        "kove.checkOnType": {
+          "type": "boolean",
+          "default": true,
+          "description": "Re-check the file as you type, after a short pause."
+        },
+        "kove.checkDelay": {
+          "type": "number",
+          "default": 400,
+          "minimum": 50,
+          "description": "How long to wait after the last keystroke before re-checking, in milliseconds."
+        }
+      }
+    }
+  }
+}

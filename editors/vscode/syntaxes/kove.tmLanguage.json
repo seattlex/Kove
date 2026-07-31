@@ -1,0 +1,187 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Kove",
+  "scopeName": "source.kove",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#declarations" },
+    { "include": "#keywords" },
+    { "include": "#literals" },
+    { "include": "#types" },
+    { "include": "#calls" },
+    { "include": "#operators" },
+    { "include": "#identifiers" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.kove",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.kove",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "declarations": {
+      "patterns": [
+        {
+          "comment": "Function declaration: highlight the name as an entity.",
+          "match": "\\b(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.function.kove" },
+            "2": { "name": "entity.name.function.kove" }
+          }
+        },
+        {
+          "comment": "Struct and enum declarations.",
+          "match": "\\b(struct|enum)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.type.kove" },
+            "2": { "name": "entity.name.type.kove" }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.kove",
+          "match": "\\b(if|else|while|for|in|return|match)\\b"
+        },
+        {
+          "name": "keyword.declaration.kove",
+          "match": "\\b(fn|let|mut|struct|enum|import)\\b"
+        },
+        {
+          "name": "constant.language.boolean.kove",
+          "match": "\\b(true|false)\\b"
+        }
+      ]
+    },
+    "literals": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.kove",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.kove",
+              "match": "\\\\u\\{[0-9a-fA-F]{1,6}\\}"
+            },
+            {
+              "name": "constant.character.escape.kove",
+              "match": "\\\\[ntr0\\\\\"']"
+            },
+            {
+              "name": "invalid.illegal.escape.kove",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.kove",
+          "match": "'(\\\\u\\{[0-9a-fA-F]{1,6}\\}|\\\\[ntr0\\\\\"']|[^'\\\\])'"
+        },
+        {
+          "comment": "Float before Int, so 1.5 is not read as 1 then .5",
+          "name": "constant.numeric.float.kove",
+          "match": "\\b[0-9]+\\.[0-9]+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.kove",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "comment": "Built-in types.",
+          "name": "support.type.primitive.kove",
+          "match": "\\b(Int|Float|Bool|Char|String)\\b"
+        },
+        {
+          "comment": "A type annotation after a colon, or a return type.",
+          "match": "(?::|->)\\s*([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "entity.name.type.kove" }
+          }
+        },
+        {
+          "comment": "Enum::Variant",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)(::)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "entity.name.type.kove" },
+            "2": { "name": "keyword.operator.path.kove" },
+            "3": { "name": "variable.other.enummember.kove" }
+          }
+        }
+      ]
+    },
+    "calls": {
+      "patterns": [
+        {
+          "comment": "The built-ins get their own scope so they read as language, not user code.",
+          "name": "support.function.builtin.kove",
+          "match": "\\b(println|assert)\\b(?=\\s*\\()"
+        },
+        {
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=\\s*\\()",
+          "captures": {
+            "1": { "name": "entity.name.function.call.kove" }
+          }
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "comment": "Compound assignment before the single-character forms.",
+          "name": "keyword.operator.assignment.compound.kove",
+          "match": "\\+=|-=|\\*=|/=|%="
+        },
+        {
+          "name": "keyword.operator.comparison.kove",
+          "match": "==|!=|<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.logical.kove",
+          "match": "&&|\\|\\||!"
+        },
+        {
+          "name": "keyword.operator.range.kove",
+          "match": "\\.\\."
+        },
+        {
+          "name": "keyword.operator.arithmetic.kove",
+          "match": "\\+|-|\\*|/|%"
+        },
+        {
+          "name": "keyword.operator.assignment.kove",
+          "match": "="
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "comment": "A field access reads as a property.",
+          "match": "(\\.)([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": { "name": "punctuation.accessor.kove" },
+            "2": { "name": "variable.other.property.kove" }
+          }
+        },
+        {
+          "name": "variable.other.kove",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+        }
+      ]
+    }
+  }
+}

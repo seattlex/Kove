@@ -1,0 +1,66 @@
+{
+  "Function": {
+    "prefix": "fn",
+    "body": ["fn ${1:name}(${2}) {", "\t$0", "}"],
+    "description": "A function"
+  },
+  "Function with a return type": {
+    "prefix": "fnr",
+    "body": [
+      "fn ${1:name}(${2}) -> ${3:Int} {",
+      "\treturn $0;",
+      "}"
+    ],
+    "description": "A function that returns a value"
+  },
+  "main": {
+    "prefix": "main",
+    "body": ["fn main() {", "\t$0", "}"],
+    "description": "The entry point"
+  },
+  "Test": {
+    "prefix": "test",
+    "body": ["fn test_${1:name}() {", "\tassert($0);", "}"],
+    "description": "A test, run by `kove test`"
+  },
+  "Struct": {
+    "prefix": "struct",
+    "body": ["struct ${1:Name} {", "\t${2:field}: ${3:Int}", "}"],
+    "description": "A struct declaration"
+  },
+  "Enum": {
+    "prefix": "enum",
+    "body": ["enum ${1:Name} {", "\t${2:Variant}", "}"],
+    "description": "An enum declaration"
+  },
+  "let": {
+    "prefix": "let",
+    "body": ["let ${1:name} = ${0};"],
+    "description": "An immutable binding"
+  },
+  "let mut": {
+    "prefix": "letmut",
+    "body": ["let mut ${1:name} = ${0};"],
+    "description": "A mutable binding"
+  },
+  "if": {
+    "prefix": "if",
+    "body": ["if ${1:condition} {", "\t$0", "}"],
+    "description": "A conditional"
+  },
+  "if else": {
+    "prefix": "ifelse",
+    "body": ["if ${1:condition} {", "\t$2", "} else {", "\t$0", "}"],
+    "description": "A conditional with an else branch"
+  },
+  "while": {
+    "prefix": "while",
+    "body": ["while ${1:condition} {", "\t$0", "}"],
+    "description": "A while loop"
+  },
+  "for": {
+    "prefix": "for",
+    "body": ["for ${1:i} in ${2:0}..${3:10} {", "\t$0", "}"],
+    "description": "A loop over a half-open range"
+  }
+}
