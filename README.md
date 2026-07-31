@@ -24,11 +24,14 @@ fn main() {
 }
 ```
 
-## Status: v0.5
+## Status: 0.5.0
 
-A Kove program can be written, checked with real diagnostics, and run.
-Native compilation is the next substantial piece of work. The full
-[roadmap](docs/roadmap.md) has the detail; the short version:
+A Kove program can be written, checked with real diagnostics, formatted,
+tested and run. Native compilation is the next substantial piece of
+work.
+
+The toolchain's version tracks the [roadmap](docs/roadmap.md): `kove
+version` printing 0.5.0 means roadmap v0.5 is complete.
 
 | | Version | State |
 | --- | --- | --- |

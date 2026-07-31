@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "kove-ast"
-version = "0.1.0-dev"
+version = "0.5.0"
 dependencies = [
  "kove-diagnostics",
  "kove-lexer",
@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "kove-cli"
-version = "0.1.0-dev"
+version = "0.5.0"
 dependencies = [
  "kove-ast",
  "kove-diagnostics",
@@ -27,11 +27,11 @@ dependencies = [
 
 [[package]]
 name = "kove-diagnostics"
-version = "0.1.0-dev"
+version = "0.5.0"
 
 [[package]]
 name = "kove-formatter"
-version = "0.1.0-dev"
+version = "0.5.0"
 dependencies = [
  "kove-diagnostics",
  "kove-parser",
@@ -40,7 +40,7 @@ dependencies = [
 
 [[package]]
 name = "kove-interpreter"
-version = "0.1.0-dev"
+version = "0.5.0"
 dependencies = [
  "kove-ast",
  "kove-diagnostics",
@@ -48,7 +48,7 @@ dependencies = [
 
 [[package]]
 name = "kove-lexer"
-version = "0.1.0-dev"
+version = "0.5.0"
 dependencies = [
  "kove-diagnostics",
  "reparse",
@@ -56,11 +56,11 @@ dependencies = [
 
 [[package]]
 name = "kove-manifest"
-version = "0.1.0-dev"
+version = "0.5.0"
 
 [[package]]
 name = "kove-parser"
-version = "0.1.0-dev"
+version = "0.5.0"
 dependencies = [
  "kove-diagnostics",
  "kove-lexer",
@@ -69,7 +69,7 @@ dependencies = [
 
 [[package]]
 name = "kove-resolver"
-version = "0.1.0-dev"
+version = "0.5.0"
 dependencies = [
  "kove-ast",
  "kove-diagnostics",
@@ -77,7 +77,7 @@ dependencies = [
 
 [[package]]
 name = "kove-tests"
-version = "0.1.0-dev"
+version = "0.5.0"
 dependencies = [
  "kove-ast",
  "kove-cli",
@@ -91,7 +91,7 @@ dependencies = [
 
 [[package]]
 name = "kove-typechecker"
-version = "0.1.0-dev"
+version = "0.5.0"
 dependencies = [
  "kove-ast",
  "kove-diagnostics",

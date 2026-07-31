@@ -4,15 +4,20 @@ Notable changes to the Kove toolchain. The language is pre-1.0, so
 anything documented here can still change; entries call out when
 behavior does.
 
-The format loosely follows [Keep a Changelog](https://keepachangelog.com),
-and versions follow [semantic versioning](https://semver.org) once 0.1.0
-ships.
+The format loosely follows [Keep a Changelog](https://keepachangelog.com).
 
-## Unreleased (0.1.0-dev)
+The toolchain's version number tracks the [roadmap](docs/roadmap.md)
+rather than running separately: `kove version` printing 0.5.0 means
+roadmap v0.5 is complete. Two numbering schemes for one project would
+only ever confuse people. Semantic versioning applies from 1.0; before
+that a minor bump can change the language, and the changelog says when
+it does.
 
-Everything through **v0.5** of the [roadmap](docs/roadmap.md): a
-tokenizer, parser, semantic analysis, type checker and interpreter, plus
-the start of v0.7 tooling.
+## 0.5.0
+
+The first version worth installing. A Kove program can be written,
+checked with real diagnostics, formatted, tested and run, from a
+terminal or from an editor.
 
 ### Language
 
