@@ -66,6 +66,7 @@ diagnostic downstream.
 | E0217 | `import` parses but modules aren't implemented yet. |
 | E0218 | `for` needs an Int range (`lo..hi`) as its iterable. |
 | E0219 | Struct literal syntax used with an enum. |
+| E0220 | A `test_` function that `kove test` cannot run (it takes parameters or returns a value). |
 | E0230 | Only named functions can be called (no methods or function values yet). |
 
 ## Runtime errors (E03xx)

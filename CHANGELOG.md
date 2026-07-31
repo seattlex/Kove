@@ -24,7 +24,7 @@ the start of v0.7 tooling.
   ranges (`0..10`)
 - Structs with literals, field access and field assignment
 - Enums with unit variants, `Enum::Variant` paths and equality
-- `println` for the primitive types
+- `println` and `assert` as built-in functions, with reserved names
 - Line and block comments
 - `import` and `match` reserved, with `import` reporting E0217 so the
   single-file model is never mistaken for the module system to come
@@ -55,6 +55,8 @@ the start of v0.7 tooling.
 - `kove new` scaffolds a project; `kove build`, `kove run` and
   `kove check` resolve the current project when given no file
 - `kove.toml` manifests, parsed strictly with line-numbered errors
+- `kove test` runs every `test_...` function and reports failures with
+  the failing assertion's source snippet
 - `kove fmt` formats in place and `kove fmt --check` reports without
   writing: opinionated, no options, idempotent, and never changes the
   token stream. Refuses files that do not parse. Enforced in CI over the

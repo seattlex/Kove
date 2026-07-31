@@ -101,7 +101,7 @@ that can only call `println` is not yet a systems language.
 - [x] `kove new` and `kove.toml`
 - [ ] Dependency resolution, lockfiles, semantic versioning
 - [ ] Local and git dependencies (a registry stays a non-goal for now)
-- [ ] `kove test`
+- [x] `kove test`, with an `assert` builtin behind it
 - [x] **Formatter** (`formatter/`): deterministic, opinionated,
       idempotent, meaning-preserving, enforced in CI
 - [ ] **Language server** (`lsp/`): diagnostics, highlighting, symbols,

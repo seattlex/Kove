@@ -223,6 +223,36 @@ underscores, starting with a letter) because a package will one day be
 importable as a module. Dependencies aren't supported yet; listing one
 is an error until the package manager lands.
 
+## Tests
+
+Any function named `test_...` that takes no parameters and returns
+nothing is a test. `kove test` compiles the program and runs them all in
+declaration order:
+
+```kov
+fn double(n: Int) -> Int {
+    return n * 2;
+}
+
+fn test_double() {
+    assert(double(21) == 42);
+}
+```
+
+```console
+$ kove test
+running 1 test(s) in `src/main.kov`
+  ok    test_double
+
+1 passed
+```
+
+A test passes if it finishes and fails if it hits a runtime error, which
+is what `assert` produces. Kove has no attributes, so the name is what
+marks a test; a `test_` function that takes parameters or returns a value
+cannot be run by the harness and is reported as E0220 rather than
+skipped. A file of tests does not need a `main`.
+
 ## Reserved words
 
 `fn let mut return if else while for in struct enum import true false

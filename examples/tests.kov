@@ -1,0 +1,40 @@
+// Tests. Any function named `test_...` that takes no parameters and
+// returns nothing is a test; `kove test` runs them all.
+//
+//     kove test examples/tests.kov
+
+fn double(n: Int) -> Int {
+    return n * 2;
+}
+
+fn clamp(value: Int, low: Int, high: Int) -> Int {
+    if value < low {
+        return low;
+    }
+    if value > high {
+        return high;
+    }
+    return value;
+}
+
+fn test_double() {
+    assert(double(0) == 0);
+    assert(double(21) == 42);
+    assert(double(0 - 3) == 0 - 6);
+}
+
+fn test_clamp_inside_the_range() {
+    assert(clamp(5, 0, 10) == 5);
+}
+
+fn test_clamp_at_the_edges() {
+    assert(clamp(0 - 1, 0, 10) == 0);
+    assert(clamp(11, 0, 10) == 10);
+    // The bounds themselves are inside the range.
+    assert(clamp(0, 0, 10) == 0);
+    assert(clamp(10, 0, 10) == 10);
+}
+
+fn main() {
+    println(double(21));
+}

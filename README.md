@@ -96,10 +96,22 @@ version = "0.1.0"
 [dependencies]
 ```
 
-Commands: `kove new`, `kove build`, `kove run`, `kove check`, `kove fmt`,
-`kove version`. Without a file argument, kove uses the current project's
+Commands: `kove new`, `kove build`, `kove run`, `kove check`,
+`kove test`, `kove fmt`, `kove version`. Without a file argument, kove uses the current project's
 `src/main.kov`. Exit codes are stable for CI: `0` success, `1` the
 program has errors, `2` the CLI was misused.
+
+Tests are functions named `test_...`, run by `kove test`:
+
+```console
+$ kove test examples/tests.kov
+running 3 test(s) in `examples/tests.kov`
+  ok    test_double
+  ok    test_clamp_inside_the_range
+  ok    test_clamp_at_the_edges
+
+3 passed
+```
 
 Formatting is opinionated and has no options:
 
