@@ -22,6 +22,7 @@ Variables are immutable by default. Assigning to one is error E0204.
 ```kov
 let mut counter = 0;
 counter = counter + 1;
+counter += 1;        // the same thing, written shorter
 ```
 
 The type annotation is optional. Without one the variable takes the type
@@ -113,6 +114,18 @@ A bare block `{ ... }` is a statement and opens a scope.
 Assignment (`x = ...`, `user.age = ...`) is a statement, not an
 expression. A target is a variable or a field chain rooted at a variable
 (E0213), and the root variable must be `mut` (E0204).
+
+The compound forms `+=`, `-=`, `*=`, `/=` and `%=` are shorthand:
+
+```kov
+counter += 1;      // exactly the same as counter = counter + 1;
+```
+
+They are rewritten during compilation, so they follow the ordinary rules
+with nothing added. The target still has to be mutable, the operands
+still have to be two `Int`s or two `Float`s, and the arithmetic is
+overflow-checked like any other. There is no compound form for `&&` or
+`||`.
 
 ## Expressions
 

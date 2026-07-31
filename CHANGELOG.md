@@ -22,6 +22,8 @@ the start of v0.7 tooling.
   declared in any order, recursion supported
 - `if` / `else if` / `else`, `while`, and `for` over half-open Int
   ranges (`0..10`)
+- Compound assignment (`+=`, `-=`, `*=`, `/=`, `%=`), rewritten during
+  lowering so it inherits every rule of the long form
 - Structs with literals, field access and field assignment
 - Enums with unit variants, `Enum::Variant` paths and equality
 - `println` and `assert` as built-in functions, with reserved names

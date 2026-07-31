@@ -32,7 +32,11 @@ Operators and punctuation:
 
 ```text
 ( ) { } , ; : :: . .. -> = == != < <= > >= + - * / % ! && ||
++= -= *= /= %=
 ```
+
+Longest match keeps the compound assignment operators whole, so `x += 1`
+never comes apart into `x`, `+`, `=`.
 
 ## Grammar
 
@@ -63,7 +67,8 @@ statement     = let_stmt | return_stmt | if_stmt | while_stmt
               | for_stmt | block | assign_stmt | expr_stmt ;
 
 let_stmt      = "let" "mut"? identifier ( ":" type )? "=" expression ";" ;
-assign_stmt   = postfix_expr "=" expression ";" ;
+assign_stmt   = postfix_expr assign_op expression ";" ;
+assign_op     = "=" | "+=" | "-=" | "*=" | "/=" | "%=" ;
 return_stmt   = "return" expression? ";" ;
 if_stmt       = "if" expression block ( "else" ( if_stmt | block ) )? ;
 while_stmt    = "while" expression block ;
