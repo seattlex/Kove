@@ -47,3 +47,11 @@ jobs:
             echo "== $f"
             cargo run --quiet -- run "$f"
           done
+
+      # Kove code in the repository is formatted by Kove's own formatter.
+      # tests/programs/invalid is excluded: those files do not parse by
+      # design, and fmt refuses input the compiler would reject.
+      - name: Check Kove formatting
+        run: |
+          cargo run --quiet -- fmt --check \
+            examples tests/programs/valid tests/programs/runtime
