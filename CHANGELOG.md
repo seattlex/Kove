@@ -63,6 +63,13 @@ terminal or from an editor.
   that reports a diagnostic instead of overflowing the host stack
 - Value semantics throughout, the deliberate v0.1 memory model
 
+### Editors
+
+- A VS Code extension in `editors/vscode`: syntax highlighting,
+  diagnostics as you type and on save, format on save, snippets, and
+  commands for run, check, test, format and explain. No build step, and
+  everything it shows comes from the `kove` binary
+
 ### Tooling
 
 - `kove new` scaffolds a project; `kove build`, `kove run` and
@@ -77,7 +84,10 @@ terminal or from an editor.
   writing: opinionated, no options, idempotent, and never changes the
   token stream. Refuses files that do not parse. Enforced in CI over the
   repository's own Kove sources
+- `kove check --json` prints diagnostics in a stable machine-readable
+  shape, so editors and CI never scrape the human layout
 - Stable exit codes: 0 success, 1 program errors, 2 CLI misuse
+- `cargo install --path cli` puts `kove` on your PATH
 
 ### Known gaps
 

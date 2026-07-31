@@ -111,6 +111,9 @@ that can only call `println` is not yet a systems language.
       width; does not break up long expressions yet
 - [ ] **Language server** (`lsp/`): diagnostics, highlighting, symbols,
       go-to-definition, find references, hover, rename
+- [x] Editor support without waiting for the server: the VS Code
+      extension in `editors/vscode` drives the CLI, and will talk to the
+      language server instead once it exists
 
 The frontend was built for both: full-fidelity trees for the formatter,
 incremental reparsing and grammar-level editor annotations for the

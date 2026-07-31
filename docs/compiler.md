@@ -124,7 +124,12 @@ cli/tests/cli.rs             the binary: commands, exit codes, stdio,
                              projects, formatting
 formatter/tests/format.rs    golden output per construct, plus the
                              idempotence and token-preservation properties
+editors/vscode/test/         the extension's static files: JSON, grammar
+                             regexes, command and setting declarations
 ```
+
+The extension's checks run under `node`, not `cargo test`, since the
+extension has no build step to catch anything. CI runs both.
 
 Fixture convention: `tests/programs/valid/*.kov` runs and must match
 its `.stdout` twin; `invalid/*.kov` declares `// expect: E0012` lines;
