@@ -86,6 +86,9 @@ terminal or from an editor.
   repository's own Kove sources
 - `kove check --json` prints diagnostics in a stable machine-readable
   shape, so editors and CI never scrape the human layout
+- `kove check -` and `kove fmt -` read source from stdin, with `--name=`
+  giving diagnostics a path to report, so an editor can check and format
+  a buffer it has not saved
 - Stable exit codes: 0 success, 1 program errors, 2 CLI misuse
 - `cargo install --path cli` puts `kove` on your PATH
 
