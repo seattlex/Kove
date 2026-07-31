@@ -55,14 +55,17 @@ the start of v0.7 tooling.
 - `kove new` scaffolds a project; `kove build`, `kove run` and
   `kove check` resolve the current project when given no file
 - `kove.toml` manifests, parsed strictly with line-numbered errors
+- `kove fmt` formats in place and `kove fmt --check` reports without
+  writing: opinionated, no options, idempotent, and never changes the
+  token stream. Refuses files that do not parse. Enforced in CI over the
+  repository's own Kove sources
 - Stable exit codes: 0 success, 1 program errors, 2 CLI misuse
-- `kove fmt` is reserved and reports that it is not implemented
 
 ### Known gaps
 
 No intermediate representation or native backend yet (v0.6), so
 `kove build` stops after checking and `kove run` interprets. No standard
 library, no modules, no pattern matching, no generics or enum payloads,
-no references or ownership model, no dependency resolution, no formatter
-and no language server. The directories for these carry READMEs with the
+no references or ownership model, no dependency resolution, and no
+language server. The formatter does not wrap long expressions yet. The directories for these carry READMEs with the
 design constraints already settled; see [docs/roadmap.md](docs/roadmap.md).

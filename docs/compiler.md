@@ -45,6 +45,7 @@ that cannot be understood alone is a stage that cannot be ported alone.
 | `kove-typechecker` | Types only. Consumes the resolver's map, so it never performs a lookup: where the resolver produced a binding, the checker records that binding's type. Failed expressions get `Ty::Error`, which is compatible with everything and stops cascades. |
 | `kove-interpreter` | Tree-walking evaluator. Assumes a checked program, so typing violations are internal compiler errors (panics), while arithmetic safety (E03xx) is checked and reported with spans. |
 | `kove-manifest` | `kove.toml` and project layout. Outside `compiler/` because it is not a compile stage: it defines what a *package* is, which the CLI needs now and the package manager and language server will need later. |
+| `kove-formatter` | `kove fmt`. Reads the concrete syntax tree, not the AST, because the AST has already discarded comments and the author's grouping. Idempotent and token-preserving, both tested. |
 | `kove-cli` | The driver (`compile`, `compile_executable`, `run`) as a library, plus the `kove` binary. |
 | `kove-tests` | The cross-cutting test suite (see below). |
 
@@ -118,7 +119,10 @@ tests/tests/typecheck.rs     one test per type error code + clean programs
 tests/tests/diagnostics.rs   golden rendered output (the format is a contract)
 tests/tests/compiler.rs      driver policy + runtime error codes
 tests/tests/integration.rs   fixture programs in tests/programs/
-cli/tests/cli.rs             the binary: commands, exit codes, stdio, projects
+cli/tests/cli.rs             the binary: commands, exit codes, stdio,
+                             projects, formatting
+formatter/tests/format.rs    golden output per construct, plus the
+                             idempotence and token-preservation properties
 ```
 
 Fixture convention: `tests/programs/valid/*.kov` runs and must match
