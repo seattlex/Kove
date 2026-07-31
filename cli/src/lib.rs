@@ -130,6 +130,9 @@ pub fn compile_tests(name: &str, text: &str) -> Compilation {
 
 /// Run one test function, returning its output on success or the runtime
 /// diagnostic on failure.
+// Unboxed for the same reason as `run`: one per test, so the caller's
+// convenience beats shrinking a `Result` built at most once.
+#[allow(clippy::result_large_err)]
 pub fn run_test(c: &Compilation, name: &str) -> Result<Vec<u8>, Diagnostic> {
     let mut out = Vec::new();
     match run_entry(c, name, &mut out) {
