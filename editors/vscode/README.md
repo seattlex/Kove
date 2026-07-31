@@ -11,8 +11,8 @@ highlighting, diagnostics, formatting, and the `kove` commands.
   help and notes from a diagnostic appear in the hover, and the error
   code is attached so you can look it up.
 - **Formatting** through `kove fmt`, so format-on-save works with no
-  extra setup. The formatter is opinionated and has no options, so
-  neither does this.
+  extra setup. It formats the buffer, saved or not. The formatter is
+  opinionated and has no options, so neither does this.
 - **Snippets** for the shapes you type constantly: `fn`, `main`, `test`,
   `struct`, `enum`, `for`, `if`.
 - **Commands**, all in the palette:
@@ -54,10 +54,13 @@ button that takes you to the setting.
 The extension is deliberately thin. It shells out to `kove` and shows
 what comes back:
 
-- diagnostics come from `kove check --json`, a stable machine-readable
+- diagnostics come from `kove check --json -`, a stable machine-readable
   format documented in [docs/diagnostics.md](../../docs/diagnostics.md)
-- formatting is `kove fmt`
+- formatting is `kove fmt -`
 - the commands run exactly what you would type in a terminal
+
+Both read the buffer on stdin rather than the file on disk, so what you
+see matches what you have typed rather than what you last saved.
 
 So the editor cannot disagree with the compiler, and there is no second
 implementation of the language to keep in step. When the Kove language
@@ -83,10 +86,11 @@ Reload the window afterwards.
 
 ## Known limits
 
-- Formatting requires the file to be saved, since `kove fmt` works on
-  files. Formatting an unsaved buffer is declined rather than done on
-  stale text.
 - No completion, go-to-definition or rename yet. Those want the language
   server, which is v0.7 on the [roadmap](../../docs/roadmap.md). The
   compiler already computes what they need: the resolver maps every
   reference to what it names.
+- Checking runs the whole frontend per keystroke pause. That is fast at
+  the size of program Kove can express today; when it stops being fast,
+  the answer is the language server and its incremental reparsing, not a
+  cache here.

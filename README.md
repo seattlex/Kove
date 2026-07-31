@@ -144,10 +144,13 @@ $ kove fmt              # rewrite the project's sources
 $ kove fmt --check      # report what would change, exit 1 if anything would
 ```
 
-Tools read diagnostics as JSON rather than scraping the human output:
+Tools read diagnostics as JSON rather than scraping the human output,
+and can pass source on stdin instead of a path:
 
 ```console
 $ kove check --json src/main.kov
+$ kove check --json --name=src/main.kov -   # source on stdin
+$ kove fmt -                                # formats stdin onto stdout
 ```
 
 Development:

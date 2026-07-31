@@ -33,6 +33,11 @@ so consumers can read the same keys every time.
 Exit codes are unchanged: 1 if there are errors, 0 otherwise. Warnings
 appear in the list without affecting the exit code.
 
+Passing `-` instead of a path reads the source from stdin, which is how
+an editor checks a buffer it has not saved. Stdin has no path, so
+`--name=src/main.kov` says what the diagnostics should point at;
+without it they say `<stdin>`.
+
 ## Explaining a code
 
 `kove explain --list` prints every code with its summary. Each one has a
