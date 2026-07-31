@@ -532,7 +532,17 @@ impl<'a> Printer<'a> {
                 if let Some(target) = self.field(node, "target") {
                     self.expr(&target);
                 }
-                self.write(" = ");
+                // `=` or one of the compound operators; the tree keeps
+                // which one the author wrote, so print that.
+                match self.field_token(node, "op") {
+                    Some(op) => {
+                        self.trivia(&op);
+                        self.space();
+                        self.token_no_trivia(&op);
+                    }
+                    None => self.write(" ="),
+                }
+                self.write(" ");
                 if let Some(value) = self.field(node, "value") {
                     self.expr(&value);
                 }

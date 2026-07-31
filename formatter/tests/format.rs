@@ -201,6 +201,18 @@ fn short_lists_stay_on_one_line() {
 }
 
 #[test]
+fn compound_assignment_keeps_its_operator() {
+    assert_formats(
+        "fn f(){x+=1;y  -=  2;z.w*=3;a/=4;b%=5;}",
+        "fn f() {\n    x += 1;\n    y -= 2;\n    z.w *= 3;\n    a /= 4;\n    b %= 5;\n}\n",
+    );
+    // The formatter must not rewrite `x += 1` as `x = x + 1`: that is a
+    // lowering concern, and the source says what the author wrote.
+    let out = format("fn f(){x+=1;}").unwrap();
+    assert!(!out.contains("x = x"), "{out}");
+}
+
+#[test]
 fn imports() {
     assert_formats("import  std :: io ;", "import std::io;\n");
 }
