@@ -81,12 +81,13 @@ impl<'a> Printer<'a> {
 
     /// Whether `width` more columns fit on the current line.
     ///
-    /// One column is held back for a terminator the caller will add but
-    /// this printer cannot see from here, such as the `;` after a
-    /// statement or the `,` after a list item. Without it a construct that
-    /// measures as exactly full ends up one column over.
+    /// The comparison is strict rather than `<=` on purpose: it holds one
+    /// column back for a terminator the caller will add but this printer
+    /// cannot see from here, such as the `;` after a statement or the `,`
+    /// after a list item. Without that, a construct measuring as exactly
+    /// full ends up one column over.
     fn fits(&self, width: usize) -> bool {
-        self.current_column() + width + 1 <= MAX_WIDTH
+        self.current_column() + width < MAX_WIDTH
     }
 
     /// Width of the line being built, for the break-or-not decisions.
