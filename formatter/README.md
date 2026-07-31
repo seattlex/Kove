@@ -15,9 +15,11 @@ debates, no configuration file.
 - One member per line in struct and enum declarations. They are read far
   more often than written, and a diff that touches one field should
   touch one line.
-- Struct literals stay on one line when they fit within 100 columns and
-  contain no comments, and break one field per line when they do not.
-  Width decides, not how the author happened to type it.
+- Struct literals, call arguments and parameter lists stay on one line
+  when they fit within 100 columns and contain no comments, and break one
+  item per line when they do not. Width decides, not how the author
+  happened to type it. A wrapped list gets a trailing comma, so adding an
+  item touches one line.
 - A single blank line wherever the author left one or more; never two.
 - Exactly one trailing newline.
 
@@ -60,7 +62,7 @@ CI runs `kove fmt --check` over the repository's Kove sources.
 
 ## Not yet
 
-- Long expressions and long call argument lists are not wrapped; only
-  struct literals break on width so far.
+- Long *expressions* are not broken up. A single arithmetic or logical
+  expression that runs past the width stays on its line; only lists wrap.
 - The language server will share this code when it lands, per the rule
   that there is one implementation of everything.

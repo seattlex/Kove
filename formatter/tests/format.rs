@@ -147,6 +147,60 @@ fn struct_literals_break_only_when_they_must() {
 }
 
 #[test]
+fn long_lists_wrap_one_item_per_line() {
+    let long = format!(
+        "fn wide({}) {{ }}\nfn main() {{ wide({}); }}",
+        (0..10)
+            .map(|i| format!("param_number_{i}: Int"))
+            .collect::<Vec<_>>()
+            .join(", "),
+        (0..10)
+            .map(|i| format!("{i}00000000"))
+            .collect::<Vec<_>>()
+            .join(", "),
+    );
+    let out = format(&long).unwrap();
+    assert!(
+        out.contains("fn wide(\n    param_number_0: Int,\n"),
+        "{out}"
+    );
+    assert!(out.contains("    wide(\n        000000000,\n"), "{out}");
+    // A wrapped list ends every line the same way, trailing comma included.
+    assert!(out.contains("param_number_9: Int,\n) {"), "{out}");
+    assert_eq!(format(&out).unwrap(), out, "not idempotent");
+}
+
+#[test]
+fn nothing_the_formatter_emits_exceeds_the_width_it_can_control() {
+    let long = format!(
+        "fn main() {{ let x = compute({}); }}\nfn compute({}) -> Int {{ return 1; }}",
+        (0..6)
+            .map(|i| format!("{i}00000"))
+            .collect::<Vec<_>>()
+            .join(", "),
+        (0..6)
+            .map(|i| format!("a{i}: Int"))
+            .collect::<Vec<_>>()
+            .join(", "),
+    );
+    for line in format(&long).unwrap().lines() {
+        assert!(
+            line.chars().count() <= kove_formatter::MAX_WIDTH,
+            "line over {} columns: {line:?}",
+            kove_formatter::MAX_WIDTH
+        );
+    }
+}
+
+#[test]
+fn short_lists_stay_on_one_line() {
+    assert_formats(
+        "fn f(a:Int,b:Int){g(a,b);}",
+        "fn f(a: Int, b: Int) {\n    g(a, b);\n}\n",
+    );
+}
+
+#[test]
 fn imports() {
     assert_formats("import  std :: io ;", "import std::io;\n");
 }

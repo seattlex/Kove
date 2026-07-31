@@ -79,6 +79,16 @@ impl<'a> Printer<'a> {
         self.pending = self.pending.max(2);
     }
 
+    /// Whether `width` more columns fit on the current line.
+    ///
+    /// One column is held back for a terminator the caller will add but
+    /// this printer cannot see from here, such as the `;` after a
+    /// statement or the `,` after a list item. Without it a construct that
+    /// measures as exactly full ends up one column over.
+    fn fits(&self, width: usize) -> bool {
+        self.current_column() + width + 1 <= MAX_WIDTH
+    }
+
     /// Width of the line being built, for the break-or-not decisions.
     fn current_column(&self) -> usize {
         if self.pending > 0 {
@@ -311,13 +321,32 @@ impl<'a> Printer<'a> {
 
     fn parameter_list(&mut self, node: &SyntaxNode) {
         let params = self.children_of_kind(node, "parameter");
-        self.write("(");
-        for (i, p) in params.iter().enumerate() {
-            if i > 0 {
-                self.write(", ");
-            }
-            self.parameter(p);
+        if params.is_empty() {
+            self.write("()");
+            return;
         }
+        if !self.has_comments(node) {
+            if let Some(inline) = self.render_list(&params, Printer::parameter) {
+                // Plus the two parentheses.
+                if self.fits(inline.len() + 2) {
+                    self.write("(");
+                    self.write(&inline);
+                    self.write(")");
+                    return;
+                }
+            }
+        }
+        // Too wide: one parameter per line, with a trailing comma so
+        // adding another touches one line.
+        self.write("(");
+        self.indent += 1;
+        for p in params.iter() {
+            self.newline();
+            self.parameter(p);
+            self.write(",");
+        }
+        self.indent -= 1;
+        self.newline();
         self.write(")");
     }
 
@@ -671,13 +700,29 @@ impl<'a> Printer<'a> {
             Some(f) => node.children().filter(|c| c.field() == Some(f)).collect(),
             None => Vec::new(),
         };
-        self.write("(");
-        for (i, a) in args.iter().enumerate() {
-            if i > 0 {
-                self.write(", ");
-            }
-            self.expr(a);
+        if args.is_empty() {
+            self.write("()");
+            return;
         }
+        if !self.has_comments(node) {
+            if let Some(inline) = self.render_list(&args, Printer::expr) {
+                if self.fits(inline.len() + 2) {
+                    self.write("(");
+                    self.write(&inline);
+                    self.write(")");
+                    return;
+                }
+            }
+        }
+        self.write("(");
+        self.indent += 1;
+        for a in args.iter() {
+            self.newline();
+            self.expr(a);
+            self.write(",");
+        }
+        self.indent -= 1;
+        self.newline();
         self.write(")");
     }
 
@@ -697,7 +742,8 @@ impl<'a> Printer<'a> {
 
         if !self.has_comments(node) {
             if let Some(inline) = self.render_inline(&inits) {
-                if self.current_column() + inline.len() < MAX_WIDTH {
+                // Plus the space before the opening brace.
+                if self.fits(inline.len() + 1) {
                     self.write(" ");
                     self.write(&inline);
                     return;
@@ -749,5 +795,29 @@ impl<'a> Printer<'a> {
             return None;
         }
         Some(scratch.out)
+    }
+
+    /// Render a comma-separated list on a scratch printer, to measure
+    /// whether it fits on the current line. `None` if it cannot be one
+    /// line at all.
+    fn render_list<T>(
+        &self,
+        items: &[T],
+        mut print: impl FnMut(&mut Printer<'a>, &T),
+    ) -> Option<String> {
+        let mut scratch = Printer::new(self.lang, self.text);
+        // A non-empty scratch buffer keeps `space()` and the comment
+        // placement rules behaving as they would mid-line.
+        scratch.out.push('(');
+        for (i, item) in items.iter().enumerate() {
+            if i > 0 {
+                scratch.write(", ");
+            }
+            print(&mut scratch, item);
+        }
+        if scratch.out.contains('\n') {
+            return None;
+        }
+        Some(scratch.out[1..].to_string())
     }
 }
