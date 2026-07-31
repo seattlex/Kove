@@ -1,11 +1,11 @@
 # Kove syntax reference
 
-The grammar as implemented in `compiler/syntax` (the single source of
-truth — this document mirrors it). Kove's grammar is defined
+The grammar as implemented in `compiler/syntax`, which is the single
+source of truth; this document mirrors it. The grammar is defined
 declaratively on the [ReParse](https://github.com/seattlex/ReParse)
-engine, which also gives every construct error recovery: any input, no
-matter how broken, parses to a complete tree with explicit `missing`
-tokens and error islands.
+engine, which gives every construct error recovery: any input, no matter
+how broken, parses to a complete tree with explicit `missing` tokens and
+error islands.
 
 ## Lexical structure
 
@@ -20,7 +20,7 @@ Tokens are matched longest-first, so `1.5` is one float token while
 | string | `"..."` with escapes `\n \t \r \0 \\ \" \'` |
 | char | `'x'` or `'\n'` (one character) |
 | line comment | `// to end of line` |
-| block comment | `/* ... */` (non-nesting; must be closed) |
+| block comment | `/* ... */` (non-nesting, must be closed) |
 
 Keywords (reserved, never identifiers):
 
@@ -37,7 +37,7 @@ Operators and punctuation:
 ## Grammar
 
 EBNF-style; `*` is repetition, `?` is optional, `|` is choice.
-Comments and whitespace may appear between any two tokens.
+Comments and whitespace can appear between any two tokens.
 
 ```ebnf
 source_file   = item* ;
@@ -96,25 +96,26 @@ parameter lists, struct/enum declarations and struct literals.
 
 ### The struct-literal / block interaction
 
-In `if ready { }`, is `ready { }` a struct literal? Kove resolves this
-without a special-cased restriction: a struct literal requires **at
-least one field**, so `ready { }` cannot be one, and a block starting
-with any real statement can never look like a field list
-(`name: value`). The parser tries the literal interpretation, fails,
-and falls back to condition-then-block. Consequence: empty struct
-literals are not part of the grammar.
+In `if ready { }`, is `ready { }` a struct literal? Kove settles this
+without a special-cased restriction: a struct literal requires at least
+one field, so `ready { }` can't be one, and a block starting with any
+real statement never looks like a field list (`name: value`). The
+parser tries the literal interpretation, fails, and falls back to
+condition-then-block. The consequence is that empty struct literals are
+not part of the grammar.
 
 ## Error recovery
 
 The parser guarantees a complete tree for every input:
 
 - A missing `)`, `}`, `,` or `;` is inserted as a zero-width token and
-  reported (E0101) — parsing continues, so one typo yields one error.
+  reported (E0101). Parsing continues, so one typo yields one error.
 - Unparseable stretches become error islands (E0103) bounded by the
-  enclosing construct's closers; the rest of the file parses normally.
+  enclosing construct's closers, and the rest of the file parses
+  normally.
 - Unterminated strings, chars and block comments have bounded extents
-  (to the end of the line / file) and their own codes (E0112–E0114)
-  rather than cascading lex errors.
+  (to the end of the line or file) and their own codes (E0112 to E0114)
+  instead of cascading lex errors.
 
 This recovery is the same machinery an editor needs, which is why the
 frontend is already suitable for the future language server.

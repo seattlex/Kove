@@ -158,7 +158,7 @@ pub enum ExprKind {
         rhs: Box<Expr>,
         op_span: Span,
     },
-    /// `lo..hi` — a half-open Int range; only meaningful as a `for` iterable.
+    /// `lo..hi`, a half-open Int range. Only meaningful as a `for` iterable.
     Range {
         lo: Box<Expr>,
         hi: Box<Expr>,

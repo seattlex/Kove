@@ -2,10 +2,10 @@
 //! engine, plus the mapping from ReParse's recovery diagnostics to Kove
 //! error codes.
 //!
-//! ReParse covers the Lexer → Parser → Concrete Syntax Tree stages of the
+//! ReParse covers the Lexer -> Parser -> Concrete Syntax Tree stages of the
 //! pipeline and gives us incremental reparsing, error recovery (any input
-//! produces a complete tree), syntax highlighting, and LSP-ready trees —
-//! the same frontend will back `kove-lsp` later, so the compiler and the
+//! produces a complete tree), syntax highlighting, and LSP-ready trees.
+//! The same frontend will back `kove-lsp` later, so the compiler and the
 //! language server can never disagree about syntax.
 //!
 //! Everything downstream (AST lowering, type checking) consumes the tree
@@ -135,7 +135,7 @@ fn build_language() -> Arc<Language> {
     // `User { name: "Alex", age: 20 }`. Requires at least one field and has
     // no recovery point on purpose: together those guarantee that a block
     // after a bare-identifier condition (`if ready { ... }`) can never be
-    // captured as a struct literal — the literal alternative fails and the
+    // captured as a struct literal: the literal alternative fails and the
     // parser backtracks to the plain identifier.
     let field_init = g.rule(
         "field_initializer",

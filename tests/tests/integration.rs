@@ -1,10 +1,10 @@
 //! End-to-end fixture tests over `tests/programs/`:
 //!
-//! - `valid/*.kov` — must compile cleanly and produce the output recorded
+//! - `valid/*.kov`: must compile cleanly and produce the output recorded
 //!   in the sibling `*.stdout` file.
-//! - `invalid/*.kov` — must fail to compile with every code named in
+//! - `invalid/*.kov`: must fail to compile with every code named in
 //!   `// expect: E0012` comments.
-//! - `runtime/*.kov` — must compile cleanly and stop with the runtime
+//! - `runtime/*.kov`: must compile cleanly and stop with the runtime
 //!   error named in a `// expect-runtime: E0301` comment.
 
 use kove_tests::programs_dir;

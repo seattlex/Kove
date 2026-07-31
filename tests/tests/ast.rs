@@ -93,7 +93,7 @@ fn parenthesized_expressions_disappear() {
     let Stmt::Let { value, .. } = &f.body.stmts[0] else {
         panic!("expected a let");
     };
-    // (1 + 2) * 3 — the parens change nesting but produce no AST node.
+    // In (1 + 2) * 3 the parens change nesting but produce no AST node.
     let ExprKind::Binary { op: BinaryOp::Mul, lhs, .. } = &value.kind else {
         panic!("expected a multiplication at the top");
     };

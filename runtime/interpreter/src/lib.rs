@@ -3,7 +3,7 @@
 //! Runs only programs that passed the type checker, so evaluation can
 //! assume well-typed operands; hitting an impossible combination is a
 //! compiler bug and panics with an ICE message. What *is* checked at
-//! runtime — and reported as an `E03xx` diagnostic with a source span —
+//! runtime, and reported as an `E03xx` diagnostic with a source span,
 //! is arithmetic safety: division/remainder by zero, Int overflow, and
 //! the recursion limit.
 //!
@@ -498,5 +498,5 @@ impl RuntimeError {
 /// Internal compiler error: the type checker let something through that it
 /// should not have. Panicking (rather than a user diagnostic) is deliberate.
 fn ice(msg: &str) -> ! {
-    panic!("internal compiler error (interpreter): {msg} — this is a bug in Kove, not in your program");
+    panic!("internal compiler error (interpreter): {msg}; this is a bug in Kove, not in your program");
 }

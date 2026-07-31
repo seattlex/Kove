@@ -6,9 +6,9 @@
 //!
 //! Error handling philosophy: a diagnostic is reported once at the point
 //! where checking fails and the offending expression gets [`Ty::Error`],
-//! which is compatible with everything — so one mistake produces one error,
-//! not a cascade, and the checker keeps going to report every independent
-//! error in the file.
+//! which is compatible with everything, so one mistake produces one error
+//! instead of a cascade, and the checker keeps going to report every
+//! independent error in the file.
 
 use kove_ast::*;
 use kove_diagnostics::{Diagnostic, Span};
@@ -92,7 +92,7 @@ pub fn check_main(program: &Program) -> Vec<Diagnostic> {
             "no `main` function found",
             Span::empty(0),
         )
-        .with_help("add `fn main() { ... }` — it is where execution starts")],
+        .with_help("add `fn main() { ... }`; it is where execution starts")],
         Some(f) if !f.params.is_empty() || f.return_type.is_some() => {
             vec![Diagnostic::error(
                 "E0214",
@@ -189,7 +189,7 @@ impl Checker {
                             format!("the module system is not implemented yet (`import {}`)", path.join("::")),
                             imp.span,
                         )
-                        .with_note("modules are planned; see docs/language.md — for now a program is a single file"),
+                        .with_note("modules are planned (see docs/language.md); for now a program is a single file"),
                     );
                 }
             }
@@ -632,12 +632,12 @@ impl Checker {
                     .with_label("not found in this scope");
                     if self.func_by_name.contains_key(name) {
                         d = d.with_help(format!(
-                            "`{}` is a function — did you mean to call it: `{}(...)`?",
+                            "`{}` is a function; did you mean to call it: `{}(...)`?",
                             name, name
                         ));
                     } else if self.enum_by_name.contains_key(name) {
                         d = d.with_help(format!(
-                            "`{}` is an enum — name one of its variants: `{}::...`",
+                            "`{}` is an enum; name one of its variants: `{}::...`",
                             name, name
                         ));
                     }
@@ -775,7 +775,7 @@ impl Checker {
                     self.diags.push(
                         Diagnostic::error(
                             "E0216",
-                            format!("`{}` is a struct, not an enum — it has no variants", base.name),
+                            format!("`{}` is a struct, not an enum, so it has no variants", base.name),
                             base.span,
                         )
                         .with_help(format!(
@@ -1151,7 +1151,7 @@ fn root_var(e: &Expr) -> Option<&str> {
 
 /// Conservative "every path returns" analysis: true when the block contains
 /// a `return`, or an `if`/`else` whose branches all return, or a nested
-/// block that does. Loops never count — their bodies may not run.
+/// block that does. Loops never count, since their bodies may not run.
 fn always_returns(block: &Block) -> bool {
     block.stmts.iter().any(stmt_always_returns)
 }
