@@ -11,7 +11,19 @@ fn kinds(text: &str) -> Vec<String> {
 fn keywords_and_identifiers() {
     assert_eq!(
         kinds("fn main() { let mutable = 0; }"),
-        vec!["fn", "identifier", "(", ")", "{", "let", "identifier", "=", "int", ";", "}"]
+        vec![
+            "fn",
+            "identifier",
+            "(",
+            ")",
+            "{",
+            "let",
+            "identifier",
+            "=",
+            "int",
+            ";",
+            "}"
+        ]
     );
     // A keyword is only a keyword when it matches exactly.
     let toks = tokens("fn f() { let letter = 1; let iff = 2; }");
@@ -97,5 +109,8 @@ fn spans_are_exact() {
         .iter()
         .find(|d| d.code == "E0112")
         .expect("E0112 reported");
-    assert_eq!(&src[diag.span.start as usize..diag.span.start as usize + 1], "\"");
+    assert_eq!(
+        &src[diag.span.start as usize..diag.span.start as usize + 1],
+        "\""
+    );
 }

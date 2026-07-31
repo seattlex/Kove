@@ -317,8 +317,7 @@ impl<'a> Lowerer<'a> {
             .unwrap_or(Block {
                 stmts: Vec::new(),
                 span: sp,
-            })
-            ;
+            });
         let else_branch = self.field_node(node, "else").and_then(|e| {
             if self.kind(&e) == "if_statement" {
                 self.if_stmt(&e).map(|i| ElseBranch::If(Box::new(i)))
@@ -537,9 +536,7 @@ impl<'a> Lowerer<'a> {
                             format!("unknown escape sequence `\\{}`", other.escape_default()),
                             Span::new(start, end),
                         )
-                        .with_help(
-                            "supported escapes are \\n, \\t, \\r, \\0, \\\\, \\\" and \\'",
-                        ),
+                        .with_help("supported escapes are \\n, \\t, \\r, \\0, \\\\, \\\" and \\'"),
                     );
                     out.push(other);
                 }

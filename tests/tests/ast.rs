@@ -33,7 +33,10 @@ fn function_signature_lowering() {
     assert_eq!(f.params[1].ty.name, "Int");
     assert_eq!(f.return_type.as_ref().unwrap().name, "Int");
     assert_eq!(f.body.stmts.len(), 1);
-    assert!(matches!(&f.body.stmts[0], Stmt::Return { value: Some(_), .. }));
+    assert!(matches!(
+        &f.body.stmts[0],
+        Stmt::Return { value: Some(_), .. }
+    ));
 }
 
 #[test]
@@ -46,8 +49,14 @@ fn spans_point_back_at_source() {
     let Stmt::Let { name, value, .. } = &f.body.stmts[0] else {
         panic!("expected a let");
     };
-    assert_eq!(&src[name.span.start as usize..name.span.end as usize], "answer");
-    assert_eq!(&src[value.span.start as usize..value.span.end as usize], "42");
+    assert_eq!(
+        &src[name.span.start as usize..name.span.end as usize],
+        "answer"
+    );
+    assert_eq!(
+        &src[value.span.start as usize..value.span.end as usize],
+        "42"
+    );
 }
 
 #[test]
@@ -94,10 +103,21 @@ fn parenthesized_expressions_disappear() {
         panic!("expected a let");
     };
     // In (1 + 2) * 3 the parens change nesting but produce no AST node.
-    let ExprKind::Binary { op: BinaryOp::Mul, lhs, .. } = &value.kind else {
+    let ExprKind::Binary {
+        op: BinaryOp::Mul,
+        lhs,
+        ..
+    } = &value.kind
+    else {
         panic!("expected a multiplication at the top");
     };
-    assert!(matches!(&lhs.kind, ExprKind::Binary { op: BinaryOp::Add, .. }));
+    assert!(matches!(
+        &lhs.kind,
+        ExprKind::Binary {
+            op: BinaryOp::Add,
+            ..
+        }
+    ));
 }
 
 #[test]

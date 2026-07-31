@@ -26,60 +26,55 @@ fn main_must_have_no_parameters_and_no_return_type() {
 
 #[test]
 fn println_prints_every_primitive() {
-    let out = run(
-        "fn main() {\n\
+    let out = run("fn main() {\n\
              println(42);\n\
              println(1.5);\n\
              println(true);\n\
              println('k');\n\
              println(\"text\");\n\
-         }",
-    );
+         }");
     assert_eq!(out, "42\n1.5\ntrue\nk\ntext\n");
 }
 
 #[test]
 fn value_semantics_copy_on_assignment() {
-    let out = run(
-        "struct P { x: Int }\n\
+    let out = run("struct P { x: Int }\n\
          fn main() {\n\
              let mut a = P { x: 1 };\n\
              let b = a;\n\
              a.x = 99;\n\
              println(b.x);\n\
-         }",
-    );
+         }");
     assert_eq!(out, "1\n");
 }
 
 #[test]
 fn logical_operators_short_circuit() {
     // If `&&` did not short-circuit, calling `boom` would divide by zero.
-    let out = run(
-        "fn boom() -> Bool { let x = 1 / 0; return true; }\n\
+    let out = run("fn boom() -> Bool { let x = 1 / 0; return true; }\n\
          fn main() {\n\
              if false && boom() { println(\"no\"); } else { println(\"ok\"); }\n\
              if true || boom() { println(\"ok\"); }\n\
-         }",
-    );
+         }");
     assert_eq!(out, "ok\nok\n");
 }
 
 #[test]
 fn recursion_works() {
-    let out = run(
-        "fn fib(n: Int) -> Int {\n\
+    let out = run("fn fib(n: Int) -> Int {\n\
              if n < 2 { return n; }\n\
              return fib(n - 1) + fib(n - 2);\n\
          }\n\
-         fn main() { println(fib(15)); }",
-    );
+         fn main() { println(fib(15)); }");
     assert_eq!(out, "610\n");
 }
 
 #[test]
 fn for_ranges_are_half_open() {
-    assert_eq!(run("fn main() { for i in 0..3 { println(i); } }"), "0\n1\n2\n");
+    assert_eq!(
+        run("fn main() { for i in 0..3 { println(i); } }"),
+        "0\n1\n2\n"
+    );
     // An empty range runs zero times.
     assert_eq!(run("fn main() { for i in 3..3 { println(i); } }"), "");
     assert_eq!(run("fn main() { for i in 5..3 { println(i); } }"), "");
@@ -87,13 +82,11 @@ fn for_ranges_are_half_open() {
 
 #[test]
 fn shadowing_is_per_scope() {
-    let out = run(
-        "fn main() {\n\
+    let out = run("fn main() {\n\
              let x = 1;\n\
              { let x = 2; println(x); }\n\
              println(x);\n\
-         }",
-    );
+         }");
     assert_eq!(out, "2\n1\n");
 }
 
@@ -110,9 +103,7 @@ fn e0301_division_by_zero() {
 #[test]
 fn e0302_integer_overflow() {
     assert_eq!(
-        run_expecting_runtime_error(
-            "fn main() { let mut x = 9223372036854775807; x = x + 1; }"
-        ),
+        run_expecting_runtime_error("fn main() { let mut x = 9223372036854775807; x = x + 1; }"),
         "E0302"
     );
 }

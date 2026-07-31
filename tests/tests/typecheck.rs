@@ -6,7 +6,11 @@ use kove_tests::codes;
 
 #[track_caller]
 fn assert_ok(src: &str) {
-    assert_eq!(codes(src), Vec::<&str>::new(), "expected no errors for {src:?}");
+    assert_eq!(
+        codes(src),
+        Vec::<&str>::new(),
+        "expected no errors for {src:?}"
+    );
 }
 
 #[track_caller]
@@ -107,17 +111,26 @@ fn e0206_unknown_field() {
         "struct P { x: Int }\nfn main() { let p = P { x: 1 }; println(p.y); }",
         "E0206",
     );
-    assert_code("struct P { x: Int }\nfn main() { let p = P { x: 1, y: 2 }; }", "E0206");
+    assert_code(
+        "struct P { x: Int }\nfn main() { let p = P { x: 1, y: 2 }; }",
+        "E0206",
+    );
 }
 
 #[test]
 fn e0207_missing_field() {
-    assert_code("struct P { x: Int, y: Int }\nfn main() { let p = P { x: 1 }; }", "E0207");
+    assert_code(
+        "struct P { x: Int, y: Int }\nfn main() { let p = P { x: 1 }; }",
+        "E0207",
+    );
 }
 
 #[test]
 fn e0208_duplicate_field_initializer() {
-    assert_code("struct P { x: Int }\nfn main() { let p = P { x: 1, x: 2 }; }", "E0208");
+    assert_code(
+        "struct P { x: Int }\nfn main() { let p = P { x: 1, x: 2 }; }",
+        "E0208",
+    );
 }
 
 #[test]
@@ -162,7 +175,10 @@ fn e0212_invalid_operands() {
 
 #[test]
 fn e0213_invalid_assignment_target() {
-    assert_code("fn f() -> Int { return 1; }\nfn main() { f() = 2; }", "E0213");
+    assert_code(
+        "fn f() -> Int { return 1; }\nfn main() { f() = 2; }",
+        "E0213",
+    );
 }
 
 #[test]
@@ -215,9 +231,7 @@ fn one_mistake_one_error() {
 
 #[test]
 fn multiple_independent_errors_are_all_reported() {
-    let found = codes(
-        "fn main() { let a: Int = \"s\"; let b: Bool = 1; let c = missing; }",
-    );
+    let found = codes("fn main() { let a: Int = \"s\"; let b: Bool = 1; let c = missing; }");
     assert_eq!(found, vec!["E0012", "E0012", "E0201"]);
 }
 

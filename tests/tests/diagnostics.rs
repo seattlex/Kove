@@ -37,7 +37,10 @@ fn multi_line_spans_underline_the_first_line() {
     let out = render(&d, &file);
     assert!(out.contains("1 | first line\n"), "{out}");
     assert!(out.contains("|       ^^^^"), "{out}");
-    assert!(!out.contains("second"), "only the first line is shown: {out}");
+    assert!(
+        !out.contains("second"),
+        "only the first line is shown: {out}"
+    );
 }
 
 #[test]

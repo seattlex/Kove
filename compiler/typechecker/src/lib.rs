@@ -87,12 +87,10 @@ pub fn check_main(program: &Program) -> Vec<Diagnostic> {
         _ => None,
     });
     match main {
-        None => vec![Diagnostic::error(
-            "E0214",
-            "no `main` function found",
-            Span::empty(0),
-        )
-        .with_help("add `fn main() { ... }`; it is where execution starts")],
+        None => vec![
+            Diagnostic::error("E0214", "no `main` function found", Span::empty(0))
+                .with_help("add `fn main() { ... }`; it is where execution starts"),
+        ],
         Some(f) if !f.params.is_empty() || f.return_type.is_some() => {
             vec![Diagnostic::error(
                 "E0214",
@@ -280,7 +278,11 @@ impl Checker {
             .struct_by_name
             .get(&name.name)
             .map(|&i| self.structs[i].span)
-            .or_else(|| self.enum_by_name.get(&name.name).map(|&i| self.enums[i].span));
+            .or_else(|| {
+                self.enum_by_name
+                    .get(&name.name)
+                    .map(|&i| self.enums[i].span)
+            });
         if prev_span.is_some() {
             self.diags.push(
                 Diagnostic::error(
@@ -311,16 +313,12 @@ impl Checker {
                     Ty::Enum(i)
                 } else {
                     self.diags.push(
-                        Diagnostic::error(
-                            "E0200",
-                            format!("cannot find type `{}`", name),
-                            t.span,
-                        )
-                        .with_label("not a known type")
-                        .with_help(
-                            "the primitive types are Int, Float, Bool, Char and String; \
+                        Diagnostic::error("E0200", format!("cannot find type `{}`", name), t.span)
+                            .with_label("not a known type")
+                            .with_help(
+                                "the primitive types are Int, Float, Bool, Char and String; \
                              structs and enums must be declared in this file",
-                        ),
+                            ),
                     );
                     Ty::Error
                 }
@@ -495,7 +493,10 @@ impl Checker {
                                 ),
                                 v.span,
                             )
-                            .with_label(format!("expected `{}` because of the return type", self.ty_name(ret))),
+                            .with_label(format!(
+                                "expected `{}` because of the return type",
+                                self.ty_name(ret)
+                            )),
                         );
                     }
                 }
@@ -708,7 +709,11 @@ impl Checker {
                 let base_ty = self.check_expr(base, scopes);
                 match base_ty {
                     Ty::Struct(idx) => {
-                        match self.structs[idx].fields.iter().find(|(n, _)| n == &name.name) {
+                        match self.structs[idx]
+                            .fields
+                            .iter()
+                            .find(|(n, _)| n == &name.name)
+                        {
                             Some((_, ty)) => *ty,
                             None => {
                                 let fields: Vec<&str> = self.structs[idx]
@@ -726,11 +731,13 @@ impl Checker {
                                         name.span,
                                     )
                                     .with_label("unknown field")
-                                    .with_help(if fields.is_empty() {
-                                        format!("`{}` has no fields", self.structs[idx].name)
-                                    } else {
-                                        format!("available fields: {}", fields.join(", "))
-                                    }),
+                                    .with_help(
+                                        if fields.is_empty() {
+                                            format!("`{}` has no fields", self.structs[idx].name)
+                                        } else {
+                                            format!("available fields: {}", fields.join(", "))
+                                        },
+                                    ),
                                 );
                                 Ty::Error
                             }
@@ -775,7 +782,10 @@ impl Checker {
                     self.diags.push(
                         Diagnostic::error(
                             "E0216",
-                            format!("`{}` is a struct, not an enum, so it has no variants", base.name),
+                            format!(
+                                "`{}` is a struct, not an enum, so it has no variants",
+                                base.name
+                            ),
                             base.span,
                         )
                         .with_help(format!(
@@ -852,7 +862,10 @@ impl Checker {
                 if comparable && lt == rt {
                     Ty::Bool
                 } else {
-                    invalid(self, "equality needs two values of the same comparable type")
+                    invalid(
+                        self,
+                        "equality needs two values of the same comparable type",
+                    )
                 }
             }
             And | Or => match (lt, rt) {
@@ -862,23 +875,13 @@ impl Checker {
         }
     }
 
-    fn check_call(
-        &mut self,
-        call: &Expr,
-        callee: &Expr,
-        args: &[Expr],
-        scopes: &mut Scopes,
-    ) -> Ty {
+    fn check_call(&mut self, call: &Expr, callee: &Expr, args: &[Expr], scopes: &mut Scopes) -> Ty {
         let ExprKind::Var(name) = &callee.kind else {
             if !matches!(callee.kind, ExprKind::Error) {
                 self.diags.push(
-                    Diagnostic::error(
-                        "E0230",
-                        "only named functions can be called",
-                        callee.span,
-                    )
-                    .with_label("not a function name")
-                    .with_note("methods and function values are not part of the language yet"),
+                    Diagnostic::error("E0230", "only named functions can be called", callee.span)
+                        .with_label("not a function name")
+                        .with_note("methods and function values are not part of the language yet"),
                 );
             }
             for a in args {
@@ -892,7 +895,10 @@ impl Checker {
                 self.diags.push(
                     Diagnostic::error(
                         "E0203",
-                        format!("`println` takes exactly 1 argument, but {} were supplied", args.len()),
+                        format!(
+                            "`println` takes exactly 1 argument, but {} were supplied",
+                            args.len()
+                        ),
                         call.span,
                     )
                     .with_label("expected 1 argument"),
@@ -1011,7 +1017,10 @@ impl Checker {
                         format!("`{}` is an enum, not a struct", name.name),
                         name.span,
                     )
-                    .with_help(format!("name one of its variants instead: `{}::...`", name.name)),
+                    .with_help(format!(
+                        "name one of its variants instead: `{}::...`",
+                        name.name
+                    )),
                 );
             } else {
                 self.diags.push(

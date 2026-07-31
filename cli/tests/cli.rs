@@ -65,7 +65,9 @@ fn check_reports_diagnostics_on_stderr_and_exits_1() {
 fn check_succeeds_on_a_valid_file() {
     let out = kove(&["check", &example("structs.kov")]);
     assert!(out.status.success());
-    assert!(String::from_utf8(out.stdout).unwrap().contains("no errors found"));
+    assert!(String::from_utf8(out.stdout)
+        .unwrap()
+        .contains("no errors found"));
 }
 
 #[test]
@@ -100,7 +102,11 @@ fn new_scaffolds_a_runnable_project() {
         .current_dir(&parent)
         .output()
         .unwrap();
-    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
     assert!(parent.join("demo_app/kove.toml").is_file());
     assert!(parent.join("demo_app/src/main.kov").is_file());
 
@@ -110,7 +116,11 @@ fn new_scaffolds_a_runnable_project() {
         .current_dir(parent.join("demo_app"))
         .output()
         .unwrap();
-    assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
+    assert!(
+        out.status.success(),
+        "{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
     assert_eq!(
         String::from_utf8(out.stdout).unwrap(),
         "Hello from demo_app!\n"
@@ -132,7 +142,9 @@ fn new_rejects_bad_names_and_existing_directories() {
     };
     let out = run("my-project");
     assert_eq!(out.status.code(), Some(2));
-    assert!(String::from_utf8(out.stderr).unwrap().contains("underscores"));
+    assert!(String::from_utf8(out.stderr)
+        .unwrap()
+        .contains("underscores"));
     assert_eq!(run("taken").status.code(), Some(2));
 }
 

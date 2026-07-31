@@ -54,7 +54,8 @@ pub fn compile(name: &str, text: &str) -> Compilation {
 pub fn compile_executable(name: &str, text: &str) -> Compilation {
     let mut c = compile(name, text);
     if !c.has_errors() {
-        c.diagnostics.extend(kove_typechecker::check_main(&c.program));
+        c.diagnostics
+            .extend(kove_typechecker::check_main(&c.program));
     }
     c
 }

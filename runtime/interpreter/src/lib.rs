@@ -298,8 +298,7 @@ impl<'p, 'o> Interp<'p, 'o> {
                 op_span,
             } => self.eval_binary(*op, lhs, rhs, *op_span, env),
             ExprKind::Range { lo, hi } => {
-                let (Value::Int(lo), Value::Int(hi)) =
-                    (self.eval(lo, env)?, self.eval(hi, env)?)
+                let (Value::Int(lo), Value::Int(hi)) = (self.eval(lo, env)?, self.eval(hi, env)?)
                 else {
                     ice("range bounds were not Ints")
                 };
@@ -316,7 +315,11 @@ impl<'p, 'o> Interp<'p, 'o> {
                 if name == "println" {
                     let value = values.into_iter().next().unwrap_or(Value::Unit);
                     writeln!(self.out, "{}", value.display()).map_err(|err| {
-                        RuntimeError::new("E0305", format!("failed to write output: {}", err), e.span)
+                        RuntimeError::new(
+                            "E0305",
+                            format!("failed to write output: {}", err),
+                            e.span,
+                        )
                     })?;
                     return Ok(Value::Unit);
                 }
@@ -446,7 +449,12 @@ impl<'p, 'o> Interp<'p, 'o> {
 
     /// Assign through a variable or a `var.field.field` chain. The type
     /// checker already verified the target exists and the root is mutable.
-    fn assign(&mut self, target: &'p Expr, value: Value, env: &mut Env) -> Result<(), RuntimeError> {
+    fn assign(
+        &mut self,
+        target: &'p Expr,
+        value: Value,
+        env: &mut Env,
+    ) -> Result<(), RuntimeError> {
         // Collect the field path from outermost access down to the root var.
         let mut path: Vec<&str> = Vec::new();
         let mut cur = target;
@@ -488,9 +496,11 @@ fn overflow(action: &str, span: Span) -> RuntimeError {
 
 impl RuntimeError {
     fn with_note_int_range(mut self) -> RuntimeError {
-        self.diagnostic = self
-            .diagnostic
-            .with_note(format!("`Int` values range from {} to {}", i64::MIN, i64::MAX));
+        self.diagnostic = self.diagnostic.with_note(format!(
+            "`Int` values range from {} to {}",
+            i64::MIN,
+            i64::MAX
+        ));
         self
     }
 }
@@ -498,5 +508,7 @@ impl RuntimeError {
 /// Internal compiler error: the type checker let something through that it
 /// should not have. Panicking (rather than a user diagnostic) is deliberate.
 fn ice(msg: &str) -> ! {
-    panic!("internal compiler error (interpreter): {msg}; this is a bug in Kove, not in your program");
+    panic!(
+        "internal compiler error (interpreter): {msg}; this is a bug in Kove, not in your program"
+    );
 }
