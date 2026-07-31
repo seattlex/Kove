@@ -97,9 +97,9 @@ version = "0.1.0"
 ```
 
 Commands: `kove new`, `kove build`, `kove run`, `kove check`,
-`kove test`, `kove fmt`, `kove version`. Without a file argument, kove uses the current project's
-`src/main.kov`. Exit codes are stable for CI: `0` success, `1` the
-program has errors, `2` the CLI was misused.
+`kove test`, `kove fmt`, `kove version`. Without a file argument, kove
+uses the current project's `src/main.kov`. Exit codes are stable for CI:
+`0` success, `1` the program has errors, `2` the CLI was misused.
 
 Tests are functions named `test_...`, run by `kove test`:
 
