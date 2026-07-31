@@ -27,6 +27,7 @@ the start of v0.7 tooling.
 - Structs with literals, field access and field assignment
 - Enums with unit variants, `Enum::Variant` paths and equality
 - `println` and `assert` as built-in functions, with reserved names
+- Escape sequences including `\u{...}` for a code point in hexadecimal
 - Line and block comments
 - `import` and `match` reserved, with `import` reporting E0217 so the
   single-file model is never mistaken for the module system to come
@@ -64,8 +65,9 @@ the start of v0.7 tooling.
 - `kove.toml` manifests, parsed strictly with line-numbered errors
 - `kove test` runs every `test_...` function and reports failures with
   the failing assertion's source snippet
-- `kove explain <code>` prints the long form of a diagnostic code, with
-  tests keeping the registry and docs/diagnostics.md in step
+- `kove explain <code>` prints the long form of a diagnostic code, and
+  `kove explain --list` shows them all, with tests keeping the registry
+  and docs/diagnostics.md in step
 - `kove fmt` formats in place and `kove fmt --check` reports without
   writing: opinionated, no options, idempotent, and never changes the
   token stream. Refuses files that do not parse. Enforced in CI over the

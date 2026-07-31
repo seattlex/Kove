@@ -65,6 +65,7 @@ Lives in `compiler/resolver`.
       all-paths-return
 - [x] Structs and enums: literals, fields, variants
 - [x] No implicit conversions, no truthiness
+- [x] Compound assignment, desugared during lowering so it adds no rules
 - [ ] Inference beyond the local case. There is no unification and no
       generics; both wait for a language feature that needs them.
 

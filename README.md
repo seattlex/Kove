@@ -161,6 +161,8 @@ E0012: mismatched types
 
 An expression has one type where another was required.
 ...
+
+$ kove explain --list     # every code with its summary
 ```
 
 Warnings are separate from errors: they are reported but never fail a
