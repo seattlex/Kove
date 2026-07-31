@@ -71,6 +71,12 @@ pub fn codes(text: &str) -> Vec<&'static str> {
         .collect()
 }
 
+/// The diagnostics themselves, for the tests that are about a message,
+/// a label or a suggestion rather than about which code fired.
+pub fn diagnostics(text: &str) -> Vec<kove_diagnostics::Diagnostic> {
+    kove_cli::compile("test.kov", text).diagnostics
+}
+
 /// Every diagnostic code produced by the full frontend, errors and
 /// warnings alike, in source order.
 pub fn all_codes(text: &str) -> Vec<&'static str> {

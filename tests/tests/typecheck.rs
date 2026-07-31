@@ -159,6 +159,31 @@ fn conversions_between_int_and_float() {
 }
 
 #[test]
+fn a_wrong_argument_count_is_the_only_error_reported() {
+    // Checking the arguments against a signature the call does not match
+    // buries the one error that matters under one per argument. A
+    // user-defined function already stops at the arity error; the
+    // built-ins now do too.
+    assert_eq!(
+        codes("fn f(a: Int) { }\nfn main() { f(1.5, 2.5); }"),
+        ["E0203"]
+    );
+    assert_eq!(
+        codes("struct P { x: Int }\nfn main() { println(1, P { x: 1 }); }"),
+        ["E0203"]
+    );
+    assert_eq!(codes("fn main() { assert(1, 2); }"), ["E0203"]);
+    assert_eq!(codes("fn main() { to_int(1, 2); }"), ["E0203"]);
+    // Errors inside the arguments are still real and still reported.
+    assert_eq!(
+        codes("fn main() { to_int(1 + true, 2); }"),
+        // E0203 first: it is reported on the whole call, which starts
+        // before the argument E0212 points at.
+        ["E0203", "E0212"]
+    );
+}
+
+#[test]
 fn e0215_unprintable_value() {
     assert_code(
         "struct P { x: Int }\nfn main() { println(P { x: 1 }); }",

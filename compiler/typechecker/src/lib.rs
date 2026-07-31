@@ -532,10 +532,10 @@ impl<'r> Checker<'r> {
     fn check_call(&mut self, call: &Expr, callee: &Expr, args: &[Expr]) -> Ty {
         match self.res.resolution(callee.id) {
             Resolution::Builtin(Builtin::Assert) => {
-                self.check_builtin_arity(call, args, Builtin::Assert, 1);
+                let arity_ok = self.check_builtin_arity(call, args, Builtin::Assert, 1);
                 for a in args {
                     let ty = self.check_expr(a);
-                    if !compat(ty, Ty::Bool) {
+                    if arity_ok && !compat(ty, Ty::Bool) {
                         self.diags.push(
                             Diagnostic::error(
                                 "E0211",
@@ -554,10 +554,10 @@ impl<'r> Checker<'r> {
                     Builtin::ToFloat => (Ty::Int, Ty::Float),
                     _ => (Ty::Float, Ty::Int),
                 };
-                self.check_builtin_arity(call, args, builtin, 1);
+                let arity_ok = self.check_builtin_arity(call, args, builtin, 1);
                 for a in args {
                     let ty = self.check_expr(a);
-                    if !compat(ty, from) {
+                    if arity_ok && !compat(ty, from) {
                         self.diags.push(
                             Diagnostic::error(
                                 "E0012",
@@ -581,13 +581,15 @@ impl<'r> Checker<'r> {
                 to
             }
             Resolution::Builtin(Builtin::Println) => {
-                self.check_builtin_arity(call, args, Builtin::Println, 1);
+                let arity_ok = self.check_builtin_arity(call, args, Builtin::Println, 1);
                 for a in args {
                     let ty = self.check_expr(a);
-                    if !matches!(
-                        ty,
-                        Ty::Int | Ty::Float | Ty::Bool | Ty::Char | Ty::Str | Ty::Error
-                    ) {
+                    if arity_ok
+                        && !matches!(
+                            ty,
+                            Ty::Int | Ty::Float | Ty::Bool | Ty::Char | Ty::Str | Ty::Error
+                        )
+                    {
                         self.diags.push(
                             Diagnostic::error(
                                 "E0215",
@@ -680,9 +682,19 @@ impl<'r> Checker<'r> {
         }
     }
 
-    fn check_builtin_arity(&mut self, call: &Expr, args: &[Expr], builtin: Builtin, want: usize) {
+    /// Reports E0203 unless the count is right. Returns whether it is, so
+    /// callers can skip checking argument types against a signature the
+    /// call does not match: the arity is the error, and one report of it
+    /// beats one plus a type error per argument.
+    fn check_builtin_arity(
+        &mut self,
+        call: &Expr,
+        args: &[Expr],
+        builtin: Builtin,
+        want: usize,
+    ) -> bool {
         if args.len() == want {
-            return;
+            return true;
         }
         self.diags.push(
             Diagnostic::error(
@@ -703,6 +715,7 @@ impl<'r> Checker<'r> {
                 if want == 1 { "" } else { "s" }
             )),
         );
+        false
     }
 
     fn check_struct_lit(&mut self, name: &Ident, fields: &[(Ident, Expr)]) -> Ty {
