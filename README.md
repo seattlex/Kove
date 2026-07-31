@@ -4,9 +4,6 @@
 > safety, Go's simplicity, and Zig's straightforward tooling, while
 > remaining entirely self-hosted in the long term.
 
-That is the [North Star](docs/north-star.md), and it is what settles
-design questions that have two defensible answers.
-
 The name is a stylized spelling of "cove": a contained, sheltered
 environment. The language ships with its own coherent toolchain rather
 than leaning on external tools.
