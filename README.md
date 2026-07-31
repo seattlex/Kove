@@ -58,20 +58,43 @@ that same grammar.
 
 [ReParse]: https://github.com/seattlex/ReParse
 
-## Building and using
+## Installing
 
-The toolchain is written in Rust:
+The toolchain is written in Rust, so a Rust install is all you need:
 
 ```console
-$ cargo build --release
-$ target/release/kove run examples/hello.kov
-Hello, Kove!
-
-$ target/release/kove check examples/structs.kov
-checked `examples/structs.kov`: no errors found
-
-$ cargo test          # the whole compiler test suite
+$ git clone https://github.com/seattlex/Kove
+$ cd Kove
+$ cargo install --path cli
 ```
+
+That puts `kove` on your PATH. To check it:
+
+```console
+$ kove version
+kove 0.5.0
+$ kove run examples/hello.kov
+Hello, Kove!
+```
+
+If you would rather not install it, `cargo build --release` leaves the
+binary at `target/release/kove`.
+
+## Editor support
+
+There is a VS Code extension in
+[editors/vscode](editors/vscode), with syntax highlighting, diagnostics
+as you type, format on save, snippets and the `kove` commands. It has no
+build step:
+
+```console
+$ ln -s "$PWD/editors/vscode" ~/.vscode/extensions/kove
+```
+
+Everything it shows comes from the `kove` binary, so the editor cannot
+disagree with the compiler. Its README has the details.
+
+## Using it
 
 Starting a project:
 
@@ -119,6 +142,18 @@ Formatting is opinionated and has no options:
 ```console
 $ kove fmt              # rewrite the project's sources
 $ kove fmt --check      # report what would change, exit 1 if anything would
+```
+
+Tools read diagnostics as JSON rather than scraping the human output:
+
+```console
+$ kove check --json src/main.kov
+```
+
+Development:
+
+```console
+$ cargo test          # the whole compiler test suite
 ```
 
 `kove build` currently stops after a full compile check. Native code
@@ -209,6 +244,8 @@ kove/
 ├── lsp/               the language server                 (v0.7)
 ├── crates/
 │   └── manifest/      kove.toml and project layout
+├── editors/
+│   └── vscode/        the VS Code extension
 ├── tests/             one suite per stage + fixture programs
 ├── docs/
 └── examples/
