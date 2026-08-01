@@ -149,7 +149,7 @@ Binary operators, loosest to tightest:
 | 2 | `\|\|` | `Bool` | `Bool`, short-circuits |
 | 3 | `&&` | `Bool` | `Bool`, short-circuits |
 | 4 | `==` `!=` | two equal comparable types | `Bool` |
-| 5 | `<` `<=` `>` `>=` | two `Int`s or two `Float`s | `Bool` |
+| 5 | `<` `<=` `>` `>=` | two `Int`s, `Float`s or `Char`s | `Bool` |
 | 6 | `+` `-` | two `Int`s or two `Float`s | operand type |
 | 7 (tightest) | `*` `/` `%` | two `Int`s or two `Float`s | operand type |
 
@@ -157,6 +157,18 @@ All binary operators associate left. Unary operators are `-` (Int,
 Float) and `!` (Bool). `==` and `!=` work on `Int`, `Float`, `Bool`,
 `Char`, `String` and enums. Comparing structs isn't supported yet
 (E0212).
+
+`Char` ordering is by Unicode scalar value, the same number a
+`'\u{...}'` escape names, so it does not stop at ASCII. That is what
+makes the usual way of classifying a character work:
+
+```kov
+fn is_digit(c: Char) -> Bool {
+    return c >= '0' && c <= '9';
+}
+```
+
+`String` has equality but no ordering yet.
 
 Runtime arithmetic on `Int` is checked: division or remainder by zero
 stops the program (E0301/E0303), and so does overflow (E0302). `Float`

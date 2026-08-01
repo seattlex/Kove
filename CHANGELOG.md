@@ -31,6 +31,9 @@ terminal or from an editor.
   lowering so it inherits every rule of the long form
 - Structs with literals, field access and field assignment
 - Enums with unit variants, `Enum::Variant` paths and equality
+- `Char` ordering by Unicode scalar value, so classifying a character
+  with `c >= '0' && c <= '9'` works. Kove has to be able to express its
+  own lexer eventually
 - `println`, `assert`, `to_float` and `to_int` as built-in functions,
   with reserved names. The conversions are the only way `Int` and
   `Float` meet, since neither converts on its own
