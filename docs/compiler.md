@@ -119,13 +119,14 @@ tests/tests/typecheck.rs     one test per type error code + clean programs
 tests/tests/diagnostics.rs   golden rendered output (the format is a contract)
 tests/tests/compiler.rs      driver policy + runtime error codes
 tests/tests/codes.rs         the code registry against docs/diagnostics.md
-tests/tests/integration.rs   fixture programs in tests/programs/
+tests/tests/integration.rs   fixture programs in tests/programs/, and
+                             the repository's examples/
 cli/tests/cli.rs             the binary: commands, exit codes, stdio,
                              projects, formatting
 formatter/tests/format.rs    golden output per construct, plus the
                              idempotence and token-preservation properties
-editors/vscode/test/         the extension's static files: JSON, grammar
-                             regexes, command and setting declarations
+editors/vscode/test/         the extension's static files, and its
+                             behavior against stubbed VS Code APIs
 ```
 
 The extension's checks run under `node`, not `cargo test`, since the
