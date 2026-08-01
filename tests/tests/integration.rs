@@ -6,8 +6,12 @@
 //!   `// expect: E0012` comments.
 //! - `runtime/*.kov`: must compile cleanly and stop with the runtime
 //!   error named in a `// expect-runtime: E0301` comment.
+//!
+//! The repository's `examples/` are covered the same way, against
+//! `programs/examples/*.stdout`. They are documentation, so a broken one
+//! is a broken doc.
 
-use kove_tests::programs_dir;
+use kove_tests::{examples_dir, programs_dir};
 use std::fs;
 use std::path::Path;
 
@@ -37,6 +41,27 @@ fn valid_programs_run_and_match_expected_output() {
             .unwrap_or_else(|_| panic!("missing .stdout for {}", path.display()));
         let out = kove_tests::run(&text);
         assert_eq!(out, expected, "output mismatch for {}", path.display());
+    }
+}
+
+#[test]
+fn examples_run_and_match_recorded_output() {
+    let recorded = programs_dir().join("examples");
+    for path in kov_files(&examples_dir()) {
+        let text = fs::read_to_string(&path).unwrap();
+        let name = path.file_stem().unwrap().to_str().unwrap();
+        let expected_path = recorded.join(format!("{name}.stdout"));
+        let expected = fs::read_to_string(&expected_path).unwrap_or_else(|_| {
+            panic!(
+                "examples/{name}.kov has no recorded output; add {}",
+                expected_path.display()
+            )
+        });
+        assert_eq!(
+            kove_tests::run(&text),
+            expected,
+            "output mismatch for examples/{name}.kov"
+        );
     }
 }
 

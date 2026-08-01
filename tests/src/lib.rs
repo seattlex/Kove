@@ -135,3 +135,13 @@ pub fn run_expecting_runtime_error(text: &str) -> &'static str {
 pub fn programs_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("programs")
 }
+
+/// Path to the repository's `examples/` directory. The examples are
+/// documentation, so a broken one is a broken doc, and that should fail
+/// `cargo test` rather than waiting for CI.
+pub fn examples_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("the tests crate has a parent directory")
+        .join("examples")
+}
