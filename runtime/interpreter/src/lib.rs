@@ -531,6 +531,15 @@ impl<'p, 'o> Interp<'p, 'o> {
                 Ge => Ok(Value::Bool(a >= b)),
                 _ => ice("unhandled Float binary operator"),
             },
+            // Rust's Ord for char is Unicode scalar order, which is the
+            // ordering the type checker promised.
+            (Value::Char(a), Value::Char(b)) => match op {
+                Lt => Ok(Value::Bool(a < b)),
+                Le => Ok(Value::Bool(a <= b)),
+                Gt => Ok(Value::Bool(a > b)),
+                Ge => Ok(Value::Bool(a >= b)),
+                _ => ice("unhandled Char binary operator"),
+            },
             _ => ice("binary operands had mismatched types"),
         }
     }

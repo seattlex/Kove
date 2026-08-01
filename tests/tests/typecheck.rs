@@ -125,6 +125,22 @@ fn e0212_invalid_operands() {
         "struct P { x: Int }\nfn main() { let a = P { x: 1 }; let b = P { x: 1 }; let e = a == b; }",
         "E0212",
     );
+    // Ordering takes two of the same orderable type, and Char is not a
+    // number however much it looks like one from the outside.
+    assert_code("fn main() { let b = 'a' < 1; }", "E0212");
+    assert_code("fn main() { let b = \"a\" < \"b\"; }", "E0212");
+    assert_code("fn main() { let b = true < false; }", "E0212");
+}
+
+#[test]
+fn chars_are_ordered() {
+    assert_ok("fn main() { println('a' < 'b'); }");
+    assert_ok("fn main() { println('a' <= 'a'); }");
+    // The reason this exists: classifying a character is how a lexer
+    // starts, and Kove has to be able to express its own.
+    assert_ok(
+        "fn is_digit(c: Char) -> Bool { return c >= '0' && c <= '9'; }\nfn main() { println(is_digit('7')); }",
+    );
 }
 
 #[test]

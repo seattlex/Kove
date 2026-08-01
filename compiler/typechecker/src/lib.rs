@@ -504,9 +504,12 @@ impl<'r> Checker<'r> {
                 (Ty::Float, Ty::Float) => Ty::Float,
                 _ => invalid(self, "arithmetic needs two Ints or two Floats"),
             },
+            // Chars order by Unicode scalar value, which is what makes
+            // `c >= '0' && c <= '9'` work. A language that intends to
+            // compile itself needs that to write a lexer.
             Lt | Le | Gt | Ge => match (lt, rt) {
-                (Ty::Int, Ty::Int) | (Ty::Float, Ty::Float) => Ty::Bool,
-                _ => invalid(self, "ordering needs two Ints or two Floats"),
+                (Ty::Int, Ty::Int) | (Ty::Float, Ty::Float) | (Ty::Char, Ty::Char) => Ty::Bool,
+                _ => invalid(self, "ordering needs two Ints, two Floats or two Chars"),
             },
             Eq | Ne => {
                 let comparable = matches!(

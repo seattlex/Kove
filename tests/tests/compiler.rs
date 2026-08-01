@@ -185,6 +185,24 @@ fn conversions_run() {
 }
 
 #[test]
+fn char_ordering_runs() {
+    assert_eq!(
+        run("fn main() { println('a' < 'b'); println('b' < 'a'); println('a' <= 'a'); }"),
+        "true\nfalse\ntrue\n"
+    );
+    // Ordering is by Unicode scalar value, so it does not stop at ASCII.
+    assert_eq!(run("fn main() { println('a' < 'é'); }"), "true\n");
+    // The case this was added for.
+    assert_eq!(
+        run(
+            "fn classify(c: Char) -> Bool { return c >= '0' && c <= '9'; }\n\
+             fn main() { println(classify('7')); println(classify('/')); println(classify(':')); }"
+        ),
+        "true\nfalse\nfalse\n"
+    );
+}
+
+#[test]
 fn e0307_float_that_no_int_can_stand_for() {
     for src in [
         "fn main() { println(to_int(1.0 / 0.0)); }",
