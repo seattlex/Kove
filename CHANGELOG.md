@@ -56,8 +56,10 @@ terminal or from an editor.
 - Name resolution and type checking are separate stages: the type
   checker never looks a name up, and `Ty::Error` stops cascades so one
   mistake produces one diagnostic
-- Roughly 30 stable diagnostic codes, rendered with a source snippet,
-  caret markers, labels, help and notes
+- Stable diagnostic codes, rendered with a source snippet, caret
+  markers, labels, help and notes. `kove explain --list` is the count
+  that cannot go stale; [docs/diagnostics.md](docs/diagnostics.md) is
+  the registry, and a test keeps the two in step
 - Suggestions for mistyped names: unknown types, variables and functions
   propose the closest thing in scope when one is close enough
 - Warnings as a separate outcome from errors, never failing a build.
