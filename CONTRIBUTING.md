@@ -80,6 +80,28 @@ Verified, the same public key also has to be registered on your account
 as a *signing* key, which is a separate entry from an authentication
 key.
 
+Two things that waste an afternoon:
+
+- **"Key is already in use"** when adding the key on GitHub means it is
+  already there as an authentication key. The form defaults to that
+  type; change **Key type** to *Signing Key* before pasting. The same
+  key is allowed to be both.
+- **`git log --format=%G?` printing `B`** does not mean the signature is
+  bad. Git verifies SSH signatures by shelling out to `ssh-keygen`, so
+  it reports `B` when `ssh-keygen` is missing or when `gpg.ssh.program`
+  points at something that cannot verify. Check that
+  `ssh-keygen -Y find-principals` runs before believing it. `U` is
+  different and does mean something: the signature is good but the key
+  is not in `.allowed_signers`.
+
+To sign commits you already made, amend them in a rebase rather than one
+at a time:
+
+```console
+$ git rebase --committer-date-is-author-date \
+    --exec 'git commit --amend --no-edit -S' <base>
+```
+
 ## Diagnostics style
 
 Diagnostics are a feature, with a golden-tested format. When writing
