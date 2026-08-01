@@ -53,6 +53,13 @@ let _unused = compute();
 | `Char` | one Unicode scalar | written `'k'`, `'\n'`, `'\u{1F600}'` |
 | `String` | immutable UTF-8 text | written `"text"` |
 
+A `String` can be compared, passed around, stored in a struct and
+printed. That is all it can do today: no length, no indexing, no
+concatenation, no way to walk its `Char`s. Those wait on decisions Kove
+has not made yet, since every one of them needs either collections or a
+story for what happens at a bad index. Until then a program that has to
+work character by character takes `Char` parameters.
+
 Escape sequences in strings and character literals are `\n`, `\t`,
 `\r`, `\0`, `\\`, `\"`, `\'`, and `\u{...}` for a code point written
 in hexadecimal:
